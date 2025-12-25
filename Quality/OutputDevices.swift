@@ -41,6 +41,9 @@ class OutputDevices: ObservableObject {
     
     private var heartbeatCancellable: AnyCancellable?
     
+    /// Flag to indicate if the track just changed, allowing any sample rate change (including downgrade)
+    private var trackJustChanged: Bool = false
+    
     init() {
         self.outputDevices = self.coreAudio.allOutputDevices
         self.defaultOutputDevice = self.coreAudio.defaultOutputDevice
@@ -136,6 +139,7 @@ class OutputDevices: ObservableObject {
                 return Double(descriptor.int32Value)
             }
             
+            // Silent error fallback
             if let error = error {
                  print("[APPLESCRIPT ERROR] - \(error)")
             }
@@ -150,20 +154,23 @@ class OutputDevices: ObservableObject {
         return []
     }
     
+    /// Switches the audio output sample rate based on detected track information
+    /// Core logic:
+    /// - On track change: Allows any sample rate change (upgrade or downgrade)
+    /// - Same track: Prevents spurious downgrades, allows significant upgrades (≥5%)
+    /// - Recursion: Used for retry logic when initial detection might be incomplete
     func switchLatestSampleRate(recursion: Bool = false) {
         var allStats = self.getAllStats()
         
+        // Fallback to AppleScript if LogStreamer hasn't detected anything yet
         if allStats.isEmpty, let scriptRate = self.getSampleRateFromAppleScript() {
             let rateHz = scriptRate < 384.0 ? scriptRate * 1000.0 : scriptRate
-            // Fallback to AppleScript rate
-            // Use 24-bit depth as a safe default for High Res Lossless
             let stat = CMPlayerStats(sampleRate: rateHz, bitDepth: 24, date: Date(), priority: 0)
             allStats.append(stat)
         }
 
+        // Prioritize LogStreamer data if it's recent (within 10 seconds)
         if let streamedStat = LogStreamer.shared.latestStats {
-             // If manual polling failed or LogStreamer has fresher/better data
-             // We prioritize LogStreamer if it's recent enough
              let timeDiff = abs(Date().timeIntervalSince(streamedStat.date))
              if timeDiff < 10.0 { 
                  allStats.insert(streamedStat, at: 0)
@@ -176,9 +183,35 @@ class OutputDevices: ObservableObject {
             let sampleRate = Float64(first.sampleRate)
             let bitDepth = Int32(first.bitDepth)
             
-            if self.currentTrack == self.previousTrack, let prevSampleRate = currentSampleRate, prevSampleRate > sampleRate {
-                // same track, prev sample rate is higher, ignore
-                return
+            // Apply protection logic only for the same track with existing sample rate
+            if !trackJustChanged && 
+               self.currentTrack == self.previousTrack &&
+               self.currentTrack != nil,
+               let prevSampleRate = currentSampleRate {
+                let prevSampleRateHz = prevSampleRate * 1000
+                
+                // Skip if sample rate is essentially unchanged (<1kHz difference)
+                if abs(prevSampleRateHz - sampleRate) < 1000 {
+                    return
+                }
+                
+                // Prevent downgrade on same track (protects against spurious 44kHz detections)
+                if sampleRate < prevSampleRateHz {
+                    return
+                }
+                
+                // Reject minor upgrades (<5%) to prevent jitter
+                // Allows: 44→48kHz (9%), 44→96kHz (118%), 44→192kHz (336%)
+                // Rejects: 44→45kHz (2%) noise/jitter
+                let upgradeRatio = sampleRate / prevSampleRateHz
+                if upgradeRatio < 1.05 {
+                    return
+                }
+            }
+            
+            // Reset the flag after applying logic
+            if trackJustChanged {
+                trackJustChanged = false
             }
             
             if sampleRate == 48000 {
@@ -203,28 +236,24 @@ class OutputDevices: ObservableObject {
             })
             
             if let suitableFormat = nearestFormat.first {
+                
                 if enableBitDepthDetection {
                     self.setFormats(device: defaultDevice, format: suitableFormat)
                 }
-                else if suitableFormat.mSampleRate != previousSampleRate { // bit depth disabled
+                else if suitableFormat.mSampleRate != previousSampleRate {
                     defaultDevice?.setNominalSampleRate(suitableFormat.mSampleRate)
                 }
+                
+                
                 self.updateSampleRate(suitableFormat.mSampleRate)
                 if let currentTrack = currentTrack {
                     self.trackAndSample[currentTrack] = suitableFormat.mSampleRate
                 }
+            } else {
+                // Appropriate format not found
             }
 
-//            if let nearest = nearest {
-//                let nearestSampleRate = nearest.element
-//                if nearestSampleRate != previousSampleRate {
-//                    defaultDevice?.setNominalSampleRate(nearestSampleRate)
-//                    self.updateSampleRate(nearestSampleRate)
-//                    if let currentTrack = currentTrack {
-//                        self.trackAndSample[currentTrack] = nearestSampleRate
-//                    }
-//                }
-//            }
+
         }
         else if !recursion {
             processQueue.asyncAfter(deadline: .now() + 1) {
@@ -232,18 +261,10 @@ class OutputDevices: ObservableObject {
             }
         }
         else {
-//                print("cache \(self.trackAndSample)")
+            // Recursion fallback: same track check
             if self.currentTrack == self.previousTrack {
-                print("same track, ignore cache")
                 return
             }
-//            if let currentTrack = currentTrack, let cachedSampleRate = trackAndSample[currentTrack] {
-//                print("using cached data")
-//                if cachedSampleRate != previousSampleRate {
-//                    defaultDevice?.setNominalSampleRate(cachedSampleRate)
-//                    self.updateSampleRate(cachedSampleRate)
-//                }
-//            }
         }
 
     }
@@ -293,10 +314,13 @@ class OutputDevices: ObservableObject {
         }
     }
     
+    /// Called when the current track changes
+    /// Sets trackJustChanged flag to allow sample rate downgrades on track switch
     func trackDidChange(_ newTrack: TrackInfo) {
         self.previousTrack = self.currentTrack
         self.currentTrack = MediaTrack(trackInfo: newTrack)
         if self.previousTrack != self.currentTrack {
+            self.trackJustChanged = true
             self.renewTimer()
         }
         processQueue.async { [unowned self] in
@@ -307,6 +331,14 @@ class OutputDevices: ObservableObject {
 
 import Sweep
 
+/// LogStreamer monitors system logs to detect audio sample rate and bit depth information
+/// from Apple Music and CoreAudio subsystems. This is necessary on macOS 15+ where
+/// direct OSLogStore access for system logs is restricted.
+/// 
+/// The streamer runs a background `log stream` process and parses log entries from:
+/// - CoreAudio (ACAppleLosslessDecoder.cpp): Most reliable, includes both sample rate and bit depth
+/// - Apple Music (audioCapabilities): Secondary source for high-level audio info
+/// - CoreMedia (AudioQueue): Fallback for basic sample rate detection
 class LogStreamer: ObservableObject {
     static let shared = LogStreamer()
     private var process: Process?
@@ -321,7 +353,6 @@ class LogStreamer: ObservableObject {
         
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/log")
-        // We use --style compact to make parsing somewhat predictable, though plain text is default
         process.arguments = [
             "stream",
             "--predicate",
@@ -344,9 +375,8 @@ class LogStreamer: ObservableObject {
         
         do {
             try process.run()
-            print("[LogStreamer] Started log stream process")
         } catch {
-            print("[LogStreamer] Failed to start log stream: \(error)")
+            // Silently fail - AppleScript fallback will handle detection
         }
     }
     
@@ -358,12 +388,15 @@ class LogStreamer: ObservableObject {
         pipe = nil
     }
     
+    /// Parses log output to extract sample rate and bit depth information
+    /// Priority levels: CoreAudio (5) > CoreMedia (2) > Music (1)
     private func processOutput(_ output: String) {
         let lines = output.components(separatedBy: .newlines)
         for line in lines {
             if line.isEmpty { continue }
             
-            // CoreAudio parsing
+            // CoreAudio parsing - Most reliable source
+            // Format: "ACAppleLosslessDecoder.cpp ... Input format: 2 ch, 192000 Hz, from 24-bit source"
             if line.contains("ACAppleLosslessDecoder.cpp") && line.contains("Input format:") {
                 var sampleRate: Double?
                 var bitDepth: Int?
@@ -385,12 +418,11 @@ class LogStreamer: ObservableObject {
                 }
             }
             
-            // Music parsing
+            // Apple Music parsing - Secondary source
+            // Format: "audioCapabilities: ... asbdSampleRate = 48 kHz ... sdBitDepth = 24 bit"
             if line.contains("audioCapabilities:") {
-                 // "asbdSampleRate = 48 kHz"
                 if let subSampleRate = line.firstSubstring(between: "asbdSampleRate = ", and: " kHz") {
                     if let sr = Double(String(subSampleRate)) {
-                        
                         var bitDepth = 16
                         if let subBitDepth = line.firstSubstring(between: "sdBitDepth = ", and: " bit") {
                              if let bd = Int(String(subBitDepth)) {
@@ -405,34 +437,31 @@ class LogStreamer: ObservableObject {
                 }
             }
             
-            // CoreMedia parsing
-             if line.contains("Creating AudioQueue") && line.contains("sampleRate:") {
-                 if let subSampleRate = line.firstSubstring(between: "sampleRate:", and: .end) { // end might fail if not sweep compatible end
-                     // Try simpler parsing
-                     let str = String(subSampleRate)
-                     // " Creating AudioQueue ... sampleRate:48000.0 ..."
-                     // The sweep 'end' might match end of string.
-                     // Often it's "sampleRate:48000.0 "
-                     let scanners = Scanner(string: str)
-                     if let sr = scanners.scanDouble() {
-                         let stat = CMPlayerStats(sampleRate: sr, bitDepth: 24, date: Date(), priority: 2)
-                         self.updateStats(stat)
-                         continue
-                     }
-                 }
-                 // Fallback parsing for CoreMedia
-                 // format: "sampleRate:48000.0" possibly followed by space or comma
-                 let components = line.components(separatedBy: "sampleRate:")
-                 if components.count > 1 {
-                     let after = components[1]
-                     let valStr = after.components(separatedBy: CharacterSet(charactersIn: " ,]")).first ?? ""
-                     if let sr = Double(valStr) {
-                         let stat = CMPlayerStats(sampleRate: sr, bitDepth: 24, date: Date(), priority: 2)
-                         self.updateStats(stat)
-                         continue
-                     }
-                 }
-             }
+            // CoreMedia parsing - Fallback source
+            // Format: "Creating AudioQueue ... sampleRate:48000.0"
+            if line.contains("Creating AudioQueue") && line.contains("sampleRate:") {
+                if let subSampleRate = line.firstSubstring(between: "sampleRate:", and: .end) {
+                    let str = String(subSampleRate)
+                    let scanners = Scanner(string: str)
+                    if let sr = scanners.scanDouble() {
+                        let stat = CMPlayerStats(sampleRate: sr, bitDepth: 24, date: Date(), priority: 2)
+                        self.updateStats(stat)
+                        continue
+                    }
+                }
+                
+                // Fallback parsing
+                let components = line.components(separatedBy: "sampleRate:")
+                if components.count > 1 {
+                    let after = components[1]
+                    let valStr = after.components(separatedBy: CharacterSet(charactersIn: " ,]")).first ?? ""
+                    if let sr = Double(valStr) {
+                        let stat = CMPlayerStats(sampleRate: sr, bitDepth: 24, date: Date(), priority: 2)
+                        self.updateStats(stat)
+                        continue
+                    }
+                }
+            }
         }
     }
     
