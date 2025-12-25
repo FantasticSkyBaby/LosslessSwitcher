@@ -210,7 +210,10 @@ class OutputDevices: ObservableObject {
                 
                 // Prevent downgrade on same track (protects against spurious 44kHz detections)
                 if sampleRate < prevSampleRateHz {
-                    return
+                    // Allow downgrade if we have high confidence (Priority 5 - CoreAudio)
+                    if first.priority < 5 {
+                        return
+                    }
                 }
                 
                 // Reject minor upgrades (<5%) to prevent jitter
