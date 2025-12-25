@@ -37,22 +37,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func checkPermissions() {
-        do {
-            if try !User.current.isAdmin() {
-                let alert = NSAlert()
-                alert.messageText = "Requires Privileges"
-                alert.informativeText = "LosslessSwitcher requires Administrator privileges in order to detect each song's lossless sample rate in the Music app."
-                alert.alertStyle = .critical
-                alert.runModal()
-                NSApp.terminate(self)
+        Task.detached(priority: .userInitiated) {
+            do {
+                if try !User.current.isAdmin() {
+                    await MainActor.run {
+                        let alert = NSAlert()
+                        alert.messageText = "Requires Privileges"
+                        alert.informativeText = "LosslessSwitcher requires Administrator privileges in order to detect each song's lossless sample rate in the Music app."
+                        alert.alertStyle = .critical
+                        alert.runModal()
+                        NSApp.terminate(self)
+                    }
+                }
             }
-        }
-        catch {
-            let alert = NSAlert()
-            alert.messageText = "Requires Privileges"
-            alert.informativeText = "LosslessSwitcher could not check if your account has Administrator privileges. If your account lacks Administrator privileges, sample rate detection will not work."
-            alert.alertStyle = .warning
-            alert.runModal()
+            catch {
+                await MainActor.run {
+                    let alert = NSAlert()
+                    alert.messageText = "Requires Privileges"
+                    alert.informativeText = "LosslessSwitcher could not check if your account has Administrator privileges. If your account lacks Administrator privileges, sample rate detection will not work."
+                    alert.alertStyle = .warning
+                    alert.runModal()
+                }
+            }
         }
     }
     

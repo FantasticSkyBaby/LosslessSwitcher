@@ -120,11 +120,24 @@ class OutputDevices: ObservableObject {
         self.updateSampleRate(sampleRate)
     }
     
+    private var scriptInstance: NSAppleScript?
+    private var lastScriptExecutionTime: Date = .distantPast
+    
     func getSampleRateFromAppleScript() -> Double? {
-        let scriptContents = "tell application \"Music\" to get sample rate of current track"
+        // Throttle: Reduce polling frequency to save CPU
+        if abs(Date().timeIntervalSince(lastScriptExecutionTime)) < 3.0 {
+            return nil
+        }
+        lastScriptExecutionTime = Date()
+        
         var error: NSDictionary?
         
-        if let script = NSAppleScript(source: scriptContents) {
+        if self.scriptInstance == nil {
+            let scriptContents = "tell application \"Music\" to get sample rate of current track"
+            self.scriptInstance = NSAppleScript(source: scriptContents)
+        }
+        
+        if let script = self.scriptInstance {
             let descriptor = script.executeAndReturnError(&error)
             
             if let output = descriptor.stringValue {
@@ -162,19 +175,19 @@ class OutputDevices: ObservableObject {
     func switchLatestSampleRate(recursion: Bool = false) {
         var allStats = self.getAllStats()
         
-        // Fallback to AppleScript if LogStreamer hasn't detected anything yet
-        if allStats.isEmpty, let scriptRate = self.getSampleRateFromAppleScript() {
-            let rateHz = scriptRate < 384.0 ? scriptRate * 1000.0 : scriptRate
-            let stat = CMPlayerStats(sampleRate: rateHz, bitDepth: 24, date: Date(), priority: 0)
-            allStats.append(stat)
-        }
-
         // Prioritize LogStreamer data if it's recent (within 10 seconds)
         if let streamedStat = LogStreamer.shared.latestStats {
              let timeDiff = abs(Date().timeIntervalSince(streamedStat.date))
              if timeDiff < 10.0 { 
                  allStats.insert(streamedStat, at: 0)
              }
+        }
+        
+        // Fallback to AppleScript if LogStreamer hasn't detected anything yet
+        if allStats.isEmpty, let scriptRate = self.getSampleRateFromAppleScript() {
+            let rateHz = scriptRate < 384.0 ? scriptRate * 1000.0 : scriptRate
+            let stat = CMPlayerStats(sampleRate: rateHz, bitDepth: 24, date: Date(), priority: 0)
+            allStats.append(stat)
         }
         
         let defaultDevice = self.selectedOutputDevice ?? self.defaultOutputDevice
@@ -367,7 +380,11 @@ class LogStreamer: ObservableObject {
         
         pipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
             let data = handle.availableData
-            if data.isEmpty { return }
+            if data.isEmpty {
+                // EOF encountered, stop the handler to prevent infinite loop (100% CPU)
+                handle.readabilityHandler = nil
+                return
+            }
             if let string = String(data: data, encoding: .utf8) {
                 self?.processOutput(string)
             }
