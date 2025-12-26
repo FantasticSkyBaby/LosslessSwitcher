@@ -68,8 +68,10 @@ struct MenuView: View {
 //            }
             
             Menu {
+                Text("FixedBy - FantasticSkyBaby")
                 Text("Version - \(currentVersion)")
                 Text("Build - \(currentBuild)")
+                
             } label: {
                 Text("About")
             }

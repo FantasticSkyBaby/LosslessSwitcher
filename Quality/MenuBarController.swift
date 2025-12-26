@@ -5,15 +5,11 @@
 //  Created by Vincent Neo on 18/6/25.
 //
 
-import Observation
 import SwiftUI
 
-@Observable
-class MenuBarController {
-    @ObservationIgnored
+class MenuBarController: ObservableObject {
     var outputDevices: OutputDevices!
     
-    @ObservationIgnored
     private var mrController: MediaRemoteController!
     
     init() {

@@ -68,8 +68,10 @@ class OutputDevices: ObservableObject {
             self.enableBitDepthDetection = newValue
         })
         
-        // Start LogStreamer
-        LogStreamer.shared.start()
+        // Start LogStreamer (Only for macOS 15+ where OSLogStore is restricted)
+        if #available(macOS 15.0, *) {
+            LogStreamer.shared.start()
+        }
         
         // Heartbeat to poll for changes if MediaRemote fails
         self.startHeartbeat()
@@ -162,9 +164,29 @@ class OutputDevices: ObservableObject {
     }
     
     func getAllStats() -> [CMPlayerStats] {
-        // OSLogStore based fetching is broken on macOS 15+ for system logs from this context.
-        // We rely on LogStreamer (background process) and AppleScript fallback.
-        return []
+        if #available(macOS 15.0, *) {
+            // OSLogStore based fetching is broken on macOS 15+ for system logs from this context.
+            // We rely on LogStreamer (background process) and AppleScript fallback.
+            return []
+        }
+        
+        // macOS 14 and earlier (Restore OSLogStore functionality)
+        var stats = [CMPlayerStats]()
+        
+        do {
+            let coreAudioLogs = try Console.getRecentEntries(type: .coreAudio)
+            stats.append(contentsOf: CMPlayerParser.parseCoreAudioConsoleLogs(coreAudioLogs))
+            
+            let musicLogs = try Console.getRecentEntries(type: .music)
+            stats.append(contentsOf: CMPlayerParser.parseMusicConsoleLogs(musicLogs))
+            
+            let coreMediaLogs = try Console.getRecentEntries(type: .coreMedia)
+            stats.append(contentsOf: CMPlayerParser.parseCoreMediaConsoleLogs(coreMediaLogs))
+        } catch {
+            print("OSLogStore fetch error: \(error)")
+        }
+        
+        return stats.sorted(by: { $0.priority > $1.priority })
     }
     
     /// Switches the audio output sample rate based on detected track information
