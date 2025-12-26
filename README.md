@@ -1,10 +1,5 @@
 # LosslessSwitcher (macOS 15+ Fix) / macOS 15+ 修复版
 
-**Author / 作者:** FantasticSkyBaby  
-**Date / 日期:** 2025-12-19
-
----
-
 ## English
 
 ### Overview
@@ -66,4 +61,7 @@ This version introduces a new **hybrid detection engine** that bypasses these re
     *   **自动化 (Automation)**: 应用会请求控制 "Music.app" 的权限（用于 AppleScript 回退）。**您必须点击“允许”**，否则自动切换可能偶尔失效。
 
 ---
+
+*Date / 日期:** 2025-12-19
+
 *Original project by Vincent Neo. Fixes by FantasticSkyBaby.*
