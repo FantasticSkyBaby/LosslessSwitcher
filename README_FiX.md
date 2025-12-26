@@ -12,7 +12,7 @@ This is a modified version of LosslessSwitcher designed to fix compatibility iss
 
 The original application relied on the `OSLogStore` API to read system audio logs and detect sample rate changes. In macOS 15, Apple restricted access to these system logs for third-party applications, causing the original version to fail (it could not detect track changes or sample rates).
 
-This version introduces a new **hybrid detection engine** that bypasses these restrictions.
+This version introduces a new **hybrid detection engine** that bypasses these restrictions.https://github.com/vincentneo/LosslessSwitcher/issues/195#issuecomment-3691938163
 
 ### Key Changes
 
@@ -43,7 +43,7 @@ This version introduces a new **hybrid detection engine** that bypasses these re
 
 原版应用依赖 `OSLogStore` API 读取系统音频日志来检测采样率变化。在 macOS 15 中，Apple 限制了第三方应用访问这些系统日志的权限，导致原版无法检测到曲目变更或采样率信息，从而失效。
 
-此版本引入了一个全新的 **混合检测引擎** 来绕过这些限制。
+此版本引入了一个全新的 **混合检测引擎** 来绕过这些限制。https://github.com/vincentneo/LosslessSwitcher/issues/195#issuecomment-3691938163
 
 ### 主要修改
 
