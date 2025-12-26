@@ -30,7 +30,7 @@ This version introduces a new **hybrid detection engine** that bypasses these re
     *   **Benefit**: Ensures the app recovers and switches correctly even if the system's "Now Playing" notifications are delayed or missed.
 
 ### Requirements
-*   **macOS**: 12.0+ (Optimized for macOS 15+)
+*   **macOS**: 13.5.0+ (Optimized for macOS 15+) Intel and Apple Silicon
 *   **Permissions**:
     *   **Automation**: The app will request permission to control "Music.app" (for the AppleScript fallback). **You must allow this.**
 
@@ -61,7 +61,7 @@ This version introduces a new **hybrid detection engine** that bypasses these re
     *   **优势**：即使系统的“正在播放”通知延迟或丢失，也能确保应用恢复并正确切换采样率。
 
 ### 系统要求与权限
-*   **macOS**: 12.0+ (针对 macOS 15+ 进行了优化)
+*   **macOS**: 13.5.0+ (针对 macOS 15+ 进行了优化) Intel and Apple Silicon
 *   **权限**:
     *   **自动化 (Automation)**: 应用会请求控制 "Music.app" 的权限（用于 AppleScript 回退）。**您必须点击“允许”**，否则自动切换可能偶尔失效。
 
