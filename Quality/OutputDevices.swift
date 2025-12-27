@@ -125,7 +125,7 @@ class OutputDevices: ObservableObject {
     private var scriptInstance: NSAppleScript?
 
     private var lastScriptExecutionTime: Date = .distantPast
-    private var lastTrackChangeDate: Date = .distantPast
+    private var lastTrackChangeDate: Date = Date()
     
     func getSampleRateFromAppleScript() -> Double? {
         // Throttle: Reduce polling frequency to save CPU
@@ -199,10 +199,13 @@ class OutputDevices: ObservableObject {
     func switchLatestSampleRate(recursion: Bool = false) {
         var allStats = self.getAllStats()
         
-        // Prioritize LogStreamer data if it's recent (within 10 seconds)
+        // Prioritize LogStreamer data if it's recent (within 60 seconds)
+        // We use a longer window (60s) because Apple Music might pre-buffer the next song 
+        // well in advance (10-20s), and we don't want to discard that valid log entry 
+        // before the track actually changes.
         if let streamedStat = LogStreamer.shared.latestStats {
              let timeDiff = abs(Date().timeIntervalSince(streamedStat.date))
-             if timeDiff < 10.0 { 
+             if timeDiff < 60.0 { 
                  allStats.insert(streamedStat, at: 0)
              }
         }
