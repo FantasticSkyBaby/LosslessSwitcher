@@ -37,7 +37,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     func checkPermissions() {
-        Task.detached(priority: .userInitiated) {
+        Task.detached(priority: .utility) {
             do {
                 if try !User.current.isAdmin() {
                     await MainActor.run {

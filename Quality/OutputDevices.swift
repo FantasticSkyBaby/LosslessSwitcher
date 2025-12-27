@@ -123,7 +123,9 @@ class OutputDevices: ObservableObject {
     }
     
     private var scriptInstance: NSAppleScript?
+
     private var lastScriptExecutionTime: Date = .distantPast
+    private var lastTrackChangeDate: Date = .distantPast
     
     func getSampleRateFromAppleScript() -> Double? {
         // Throttle: Reduce polling frequency to save CPU
@@ -225,6 +227,14 @@ class OutputDevices: ObservableObject {
                let prevSampleRate = currentSampleRate {
                 let prevSampleRateHz = prevSampleRate * 1000
                 
+                // Prevent aggressive pre-loading switching near end of track
+                // If the track has been playing for > 10 seconds, we lock the sample rate
+                // to prevent switching to the next song's rate while the current one is still finishing.
+                if Date().timeIntervalSince(self.lastTrackChangeDate) > 10.0 {
+                    return
+                }
+                
+                // Skip if sample rate is essentially unchanged (<1kHz difference)
                 // Skip if sample rate is essentially unchanged (<1kHz difference)
                 if abs(prevSampleRateHz - sampleRate) < 1000 {
                     return
@@ -359,6 +369,7 @@ class OutputDevices: ObservableObject {
         self.currentTrack = MediaTrack(trackInfo: newTrack)
         if self.previousTrack != self.currentTrack {
             self.trackJustChanged = true
+            self.lastTrackChangeDate = Date()
             self.renewTimer()
         }
         processQueue.async { [unowned self] in
