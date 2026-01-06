@@ -205,7 +205,15 @@ class OutputDevices: ObservableObject {
         // before the track actually changes.
         if let streamedStat = LogStreamer.shared.latestStats {
              let timeDiff = abs(Date().timeIntervalSince(streamedStat.date))
-             if timeDiff < 60.0 { 
+             
+             // Pre-buffering protection:
+             // If we are deep in the current track (not just changed), and a NEW log appears,
+             // it is likely the pre-buffering of the NEXT track. We should ignore it until track changes.
+             // We allow a 10s grace period from track start for valid late logs.
+             let isPrebufferLog = !trackJustChanged &&
+                                  streamedStat.date > self.lastTrackChangeDate.addingTimeInterval(10.0)
+            
+             if timeDiff < 60.0 && !isPrebufferLog {
                  allStats.insert(streamedStat, at: 0)
              }
         }
