@@ -14,6 +14,7 @@ struct CMPlayerStats {
     let bitDepth: Int
     let date: Date
     let priority: Int
+    var processName: String? = nil // e.g. "Music", "Spotify"
 }
 
 class CMPlayerParser {

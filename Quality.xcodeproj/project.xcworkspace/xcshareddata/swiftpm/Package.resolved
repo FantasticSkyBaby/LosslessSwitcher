@@ -1,33 +1,6 @@
 {
-  "originHash" : "a9dd2bae6b52b6d0b7847231eb336574bc7b096d97176d6708b23b02f6597e58",
+  "originHash" : "f9e1b49e633b37d0299aba226760be1612851501c279c96573167a94bcab3daf",
   "pins" : [
-    {
-      "identity" : "mediaremote",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/PrivateFrameworks/MediaRemote",
-      "state" : {
-        "revision" : "ee5ae0cc17c0f759049d50e6ea95e1cf718dfda5",
-        "version" : "0.1.0"
-      }
-    },
-    {
-      "identity" : "mediaremote-adapter",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/ejbills/mediaremote-adapter",
-      "state" : {
-        "branch" : "master",
-        "revision" : "70bff25eb1e88ffcb993389f6a0eda2a3516565f"
-      }
-    },
-    {
-      "identity" : "protocolbuffer",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/PrivateFrameworks/ProtocolBuffer",
-      "state" : {
-        "revision" : "20b692d09393389120bea65098ddf66129352bb7",
-        "version" : "0.1.0"
-      }
-    },
     {
       "identity" : "simplycoreaudio",
       "kind" : "remoteSourceControl",

@@ -9,10 +9,6 @@
 /* Begin PBXBuildFile section */
 		1221F3F9280F10A3003E8B77 /* SimplyCoreAudio in Frameworks */ = {isa = PBXBuildFile; productRef = 1221F3F8280F10A3003E8B77 /* SimplyCoreAudio */; };
 		1221F3FB280F1EEF003E8B77 /* OutputDevices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1221F3FA280F1EEF003E8B77 /* OutputDevices.swift */; };
-		1234F508281E8372007EC9F5 /* PrivateMediaRemote in Frameworks */ = {isa = PBXBuildFile; productRef = 1234F507281E8372007EC9F5 /* PrivateMediaRemote */; };
-		1234F50A281E83D1007EC9F5 /* MediaRemote.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1234F509281E83D1007EC9F5 /* MediaRemote.framework */; };
-		1234F50E281E8F07007EC9F5 /* MediaTrack.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1234F50D281E8F07007EC9F5 /* MediaTrack.swift */; };
-		1234F510281E9520007EC9F5 /* MediaRemoteController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1234F50F281E9520007EC9F5 /* MediaRemoteController.swift */; };
 		1254A79C2813FB9400241107 /* Defaults.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1254A79B2813FB9400241107 /* Defaults.swift */; };
 		1272AA98280DBB4900FD72BA /* QualityApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1272AA97280DBB4900FD72BA /* QualityApp.swift */; };
 		1272AA9A280DBB4900FD72BA /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1272AA99280DBB4900FD72BA /* ContentView.swift */; };
@@ -27,8 +23,6 @@
 		12F1AA572868639A006C1AD8 /* DeviceMenuItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12F1AA562868639A006C1AD8 /* DeviceMenuItem.swift */; };
 		BF0C90C82B20BFD6002F99C9 /* LosslessSwitcher.sdef in Resources */ = {isa = PBXBuildFile; fileRef = BF0C90C72B20BFD6002F99C9 /* LosslessSwitcher.sdef */; };
 		BF0C90CA2B20C163002F99C9 /* ScriptableApplicationCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF0C90C92B20C163002F99C9 /* ScriptableApplicationCommand.swift */; };
-		BF342D7C2E0935980032F398 /* MediaRemoteAdapter in Frameworks */ = {isa = PBXBuildFile; productRef = BF342D7B2E0935980032F398 /* MediaRemoteAdapter */; };
-		BF342D7D2E0937D20032F398 /* MediaRemoteAdapter in Embed Frameworks */ = {isa = PBXBuildFile; productRef = BF342D7B2E0935980032F398 /* MediaRemoteAdapter */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		BF342D802E0947890032F398 /* SampleRateLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF342D7F2E0947890032F398 /* SampleRateLabel.swift */; };
 		BF342D822E0948730032F398 /* MenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF342D812E0948730032F398 /* MenuView.swift */; };
 		BF5A87BA2E01D746002033D6 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5A87B92E01D746002033D6 /* MenuBarController.swift */; };
@@ -42,7 +36,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				BF342D7D2E0937D20032F398 /* MediaRemoteAdapter in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -51,9 +44,6 @@
 
 /* Begin PBXFileReference section */
 		1221F3FA280F1EEF003E8B77 /* OutputDevices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutputDevices.swift; sourceTree = "<group>"; };
-		1234F509281E83D1007EC9F5 /* MediaRemote.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MediaRemote.framework; path = ../../../../../System/Library/PrivateFrameworks/MediaRemote.framework; sourceTree = "<group>"; };
-		1234F50D281E8F07007EC9F5 /* MediaTrack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaTrack.swift; sourceTree = "<group>"; };
-		1234F50F281E9520007EC9F5 /* MediaRemoteController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaRemoteController.swift; sourceTree = "<group>"; };
 		1254A79B2813FB9400241107 /* Defaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Defaults.swift; sourceTree = "<group>"; };
 		1254A79D2814024300241107 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		1272AA94280DBB4900FD72BA /* LosslessSwitcher.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LosslessSwitcher.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -83,9 +73,6 @@
 			files = (
 				1221F3F9280F10A3003E8B77 /* SimplyCoreAudio in Frameworks */,
 				1272AAB1280DC71B00FD72BA /* Sweep in Frameworks */,
-				1234F50A281E83D1007EC9F5 /* MediaRemote.framework in Frameworks */,
-				BF342D7C2E0935980032F398 /* MediaRemoteAdapter in Frameworks */,
-				1234F508281E8372007EC9F5 /* PrivateMediaRemote in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -95,7 +82,6 @@
 		1234F4FD281E80A2007EC9F5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				1234F509281E83D1007EC9F5 /* MediaRemote.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -135,8 +121,6 @@
 				1221F3FA280F1EEF003E8B77 /* OutputDevices.swift */,
 				1293436A28131591002E19A8 /* CurrentUser.swift */,
 				1254A79B2813FB9400241107 /* Defaults.swift */,
-				1234F50D281E8F07007EC9F5 /* MediaTrack.swift */,
-				1234F50F281E9520007EC9F5 /* MediaRemoteController.swift */,
 				127C972C281FCF000087313B /* AppVersion.swift */,
 				12F1AA562868639A006C1AD8 /* DeviceMenuItem.swift */,
 				BF7E0D08296336DA009FFEEC /* AudioStreamBasicDescription+Equatable.swift */,
@@ -174,8 +158,6 @@
 			packageProductDependencies = (
 				1272AAB0280DC71B00FD72BA /* Sweep */,
 				1221F3F8280F10A3003E8B77 /* SimplyCoreAudio */,
-				1234F507281E8372007EC9F5 /* PrivateMediaRemote */,
-				BF342D7B2E0935980032F398 /* MediaRemoteAdapter */,
 			);
 			productName = Quality;
 			productReference = 1272AA94280DBB4900FD72BA /* LosslessSwitcher.app */;
@@ -208,8 +190,6 @@
 			packageReferences = (
 				1272AAAF280DC71B00FD72BA /* XCRemoteSwiftPackageReference "Sweep" */,
 				1221F3F7280F10A3003E8B77 /* XCRemoteSwiftPackageReference "SimplyCoreAudio" */,
-				1234F504281E8372007EC9F5 /* XCRemoteSwiftPackageReference "MediaRemote" */,
-				BF342D7A2E0935980032F398 /* XCRemoteSwiftPackageReference "mediaremote-adapter" */,
 			);
 			productRefGroup = 1272AA95280DBB4900FD72BA /* Products */;
 			projectDirPath = "";
@@ -243,13 +223,11 @@
 				1254A79C2813FB9400241107 /* Defaults.swift in Sources */,
 				BF7E0D09296336DA009FFEEC /* AudioStreamBasicDescription+Equatable.swift in Sources */,
 				BF5A87BA2E01D746002033D6 /* MenuBarController.swift in Sources */,
-				1234F50E281E8F07007EC9F5 /* MediaTrack.swift in Sources */,
 				12F1AA572868639A006C1AD8 /* DeviceMenuItem.swift in Sources */,
 				BF342D822E0948730032F398 /* MenuView.swift in Sources */,
 				1221F3FB280F1EEF003E8B77 /* OutputDevices.swift in Sources */,
 				1272AAAE280DC68A00FD72BA /* CMPlayerStuff.swift in Sources */,
 				1272AAAC280DC5E900FD72BA /* Console.swift in Sources */,
-				1234F510281E9520007EC9F5 /* MediaRemoteController.swift in Sources */,
 				1272AA9A280DBB4900FD72BA /* ContentView.swift in Sources */,
 				1293436B28131591002E19A8 /* CurrentUser.swift in Sources */,
 				1272AA98280DBB4900FD72BA /* QualityApp.swift in Sources */,
@@ -382,7 +360,7 @@
 				CODE_SIGN_ENTITLEMENTS = Quality/Quality.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Quality/Preview Content\"";
 				DEVELOPMENT_TEAM = Y9WK7QN4C7;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -398,7 +376,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
-				MARKETING_VERSION = 3.1;
+				MARKETING_VERSION = 4;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.vincent-neo.LosslessSwitcher";
 				PRODUCT_NAME = LosslessSwitcher;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -418,7 +396,7 @@
 				CODE_SIGN_ENTITLEMENTS = Quality/Quality.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 3;
+				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Quality/Preview Content\"";
 				DEVELOPMENT_TEAM = Y9WK7QN4C7;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -434,7 +412,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.5;
-				MARKETING_VERSION = 3.1;
+				MARKETING_VERSION = 4;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.vincent-neo.LosslessSwitcher";
 				PRODUCT_NAME = LosslessSwitcher;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -478,28 +456,12 @@
 				kind = branch;
 			};
 		};
-		1234F504281E8372007EC9F5 /* XCRemoteSwiftPackageReference "MediaRemote" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/PrivateFrameworks/MediaRemote";
-			requirement = {
-				kind = upToNextMinorVersion;
-				minimumVersion = 0.1.0;
-			};
-		};
 		1272AAAF280DC71B00FD72BA /* XCRemoteSwiftPackageReference "Sweep" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/JohnSundell/Sweep.git";
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 0.4.0;
-			};
-		};
-		BF342D7A2E0935980032F398 /* XCRemoteSwiftPackageReference "mediaremote-adapter" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/ejbills/mediaremote-adapter";
-			requirement = {
-				branch = master;
-				kind = branch;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
@@ -510,20 +472,10 @@
 			package = 1221F3F7280F10A3003E8B77 /* XCRemoteSwiftPackageReference "SimplyCoreAudio" */;
 			productName = SimplyCoreAudio;
 		};
-		1234F507281E8372007EC9F5 /* PrivateMediaRemote */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 1234F504281E8372007EC9F5 /* XCRemoteSwiftPackageReference "MediaRemote" */;
-			productName = PrivateMediaRemote;
-		};
 		1272AAB0280DC71B00FD72BA /* Sweep */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 1272AAAF280DC71B00FD72BA /* XCRemoteSwiftPackageReference "Sweep" */;
 			productName = Sweep;
-		};
-		BF342D7B2E0935980032F398 /* MediaRemoteAdapter */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = BF342D7A2E0935980032F398 /* XCRemoteSwiftPackageReference "mediaremote-adapter" */;
-			productName = MediaRemoteAdapter;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

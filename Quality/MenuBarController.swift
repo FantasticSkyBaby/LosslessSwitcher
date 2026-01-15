@@ -10,11 +10,8 @@ import SwiftUI
 class MenuBarController: ObservableObject {
     var outputDevices: OutputDevices!
     
-    private var mrController: MediaRemoteController!
-    
     init() {
         let outputDevices = OutputDevices()
         self.outputDevices = outputDevices
-        self.mrController = MediaRemoteController(outputDevices: outputDevices)
     }
 }

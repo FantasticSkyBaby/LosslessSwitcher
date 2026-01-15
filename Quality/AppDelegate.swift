@@ -9,15 +9,12 @@ import Cocoa
 import Combine
 import SwiftUI
 import SimplyCoreAudio
-import PrivateMediaRemote
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     
-    // https://stackoverflow.com/a/66160164
     static private(set) var instance: AppDelegate! = nil
     var outputDevices: OutputDevices!
     private let defaults = Defaults.shared
-    private var mrController: MediaRemoteController!
     private var devicesMenu: NSMenu!
     
     var statusItem: NSStatusItem?
@@ -43,7 +40,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     await MainActor.run {
                         let alert = NSAlert()
                         alert.messageText = "Requires Privileges"
-                        alert.informativeText = "LosslessSwitcher requires Administrator privileges in order to detect each song's lossless sample rate in the Music app."
+                        alert.informativeText = "LosslessSwitcher requires Administrator privileges in order to detect audio sample rate changes from system logs."
                         alert.alertStyle = .critical
                         alert.runModal()
                         NSApp.terminate(self)
@@ -65,7 +62,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppDelegate.instance = self
         outputDevices = OutputDevices()
-        mrController = MediaRemoteController(outputDevices: outputDevices)
         
         checkPermissions()
 //        
