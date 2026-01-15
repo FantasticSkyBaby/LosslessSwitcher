@@ -107,7 +107,13 @@ class OutputDevices: ObservableObject {
         guard let userInfo = notification.userInfo else { return }
         
         if let state = userInfo["Player State"] as? String {
+            let wasPlaying = self.isMusicPlaying
             self.isMusicPlaying = (state == "Playing")
+            
+            if !wasPlaying && self.isMusicPlaying {
+                print("Playback Resumed: Resetting track change timer")
+                self.lastTrackChangeDate = Date()
+            }
         }
         
         if let persistentID = userInfo["PersistentID"] as? Int {
