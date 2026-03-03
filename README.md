@@ -1,5 +1,8 @@
 # LosslessSwitcher (通用版) / Universal Audio Sample Rate Switcher
 
+<img width="736" height="784" alt="CleanShot 2026-03-03 at 4  54 55@2x" src="https://github.com/user-attachments/assets/ce43c55f-440b-4d48-abba-873d50dc311e" />
+
+
 ## 中文 (Chinese)
 
 ### 简介
