@@ -11,6 +11,7 @@ struct MenuView: View {
     
     @EnvironmentObject private var outputDevices: OutputDevices
     @EnvironmentObject private var defaults: Defaults
+    @ObservedObject private var logStreamer = LogStreamer.shared
     
     var body: some View {
         VStack {
@@ -32,6 +33,38 @@ struct MenuView: View {
                     if defaults.userPreferBitDepthDetection {
                         Image(systemName: "checkmark")
                     }
+                }
+            }
+
+            Button {
+                defaults.userPreferDebugMenu.toggle()
+            } label: {
+                HStack {
+                    Text("Debug Logs")
+                    if defaults.userPreferDebugMenu {
+                        Image(systemName: "checkmark")
+                    }
+                }
+            }
+
+            if defaults.userPreferDebugMenu {
+                Divider()
+
+                if logStreamer.recentTracks.isEmpty {
+                    Text("No Data")
+                        .font(.system(size: 11))
+                        .foregroundColor(.secondary)
+                }
+
+                ForEach(Array(logStreamer.recentTracks.enumerated()), id: \.offset) { index, entry in
+                    let lines = DebugStatText.lines(for: entry)
+                    (
+                        Text(lines.line1 + "\n")
+                            .font(.system(size: 12, weight: index == 0 ? .semibold : .regular))
+                        + Text(lines.line2)
+                            .font(.system(size: 10))
+                            .foregroundColor(.secondary)
+                    )
                 }
             }
             
@@ -60,12 +93,6 @@ struct MenuView: View {
             } label: {
                 Text("Selected Device")
             }
-            
-//            Menu {
-//                
-//            } label: {
-//                Text("")
-//            }
             
             Menu {
                 Text("FixedBy - FantasticSkyBaby")

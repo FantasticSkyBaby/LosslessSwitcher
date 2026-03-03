@@ -15,9 +15,21 @@ struct ContentView: View {
     var body: some View {
         VStack {
             if let currentSampleRate = outputDevices.currentSampleRate {
-                let formattedSampleRate = String(format: "%.1f kHz", currentSampleRate)
-                Text(formattedSampleRate)
-                    .font(.system(size: 23, weight: .semibold, design: .default))
+                let parts = SampleRateText.parts(sampleRateKHz: currentSampleRate,
+                                                 bitDepth: outputDevices.currentBitDepth)
+                if let bit = parts.bit {
+                    (
+                        Text(parts.rate)
+                            .font(.system(size: 23, weight: .semibold, design: .default))
+                        + Text(" ")
+                        + Text(bit)
+                            .font(.system(size: 20, weight: .semibold, design: .default))
+                    )
+                }
+                else {
+                    Text(parts.rate)
+                        .font(.system(size: 23, weight: .semibold, design: .default))
+                }
             }
             if let device = outputDevices.selectedOutputDevice ?? outputDevices.defaultOutputDevice {
                 Text(device.name)
@@ -34,5 +46,3 @@ struct ContentView_Previews: PreviewProvider {
         ContentView()
     }
 }
-
-

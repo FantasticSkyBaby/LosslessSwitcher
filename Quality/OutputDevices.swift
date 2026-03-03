@@ -9,13 +9,17 @@ import Combine
 import Foundation
 import SimplyCoreAudio
 import CoreAudioTypes
-import AppKit
 
 class OutputDevices: ObservableObject {
-    @Published var selectedOutputDevice: AudioDevice? // 如果为 nil 则自动选择
+    @Published var selectedOutputDevice: AudioDevice?
     @Published var defaultOutputDevice: AudioDevice?
-    @Published var outputDevices = [AudioDevice]()
+    @Published var outputDevices = [AudioDevice]() {
+        didSet {
+            self.syncSelectedOutputDevice()
+        }
+    }
     @Published var currentSampleRate: Float64?
+    @Published var currentBitDepth: Int?
     
     private var enableBitDepthDetection = Defaults.shared.userPreferBitDepthDetection
     private var enableBitDepthDetectionCancellable: AnyCancellable?
@@ -24,36 +28,76 @@ class OutputDevices: ObservableObject {
     
     private var changesCancellable: AnyCancellable?
     private var defaultChangesCancellable: AnyCancellable?
-    private var timerCancellable: AnyCancellable?
     private var outputSelectionCancellable: AnyCancellable?
     private var logStreamerCancellable: AnyCancellable?
-    
-    private var consoleQueue = DispatchQueue(label: "consoleQueue", qos: .userInteractive)
     
     private var processQueue = DispatchQueue(label: "processQueue", qos: .userInitiated)
     
     private var previousSampleRate: Float64?
     private var lastDetectedSampleRate: Float64?
     
-    var timerActive = false
-    var timerCalls = 0
-    
     private var heartbeatCancellable: AnyCancellable?
+
+    private func debugLog(_ message: String) {
+        guard Defaults.shared.userPreferDebugMenu else { return }
+        print("[LosslessSwitcher][Debug] \(message)")
+    }
     
-    /// 采样率是否刚刚发生显著变化
     private var sampleRateJustChanged: Bool = false
     private var lastSampleRateChangeDate: Date = Date()
     
-    /// 当前采样率稳定的时间（用于预缓冲保护）
     private var sampleRateStableSince: Date = Date()
     
-    // 跟踪潜在的降级（用于防抖/延迟逻辑）
     private var pendingDowngradeStat: CMPlayerStats?
     private var pendingDowngradeDetectedAt: Date?
+
+    private var lastProcessedStatDate: Date?
+    private var lastProcessedGeneration: UInt64 = 0
+    
+    private let musicSessionWindow: TimeInterval = 15.0
+    private let musicDowngradeConfirmWindow: TimeInterval = 12.0
+    private let musicHighRateSilenceWindow: TimeInterval = 8.0
+    private var lastMusicLogAt: Date?
+    private var lastMusicHighRateAt: Date?
+    private var pendingMusicDowngradeStat: CMPlayerStats?
+    private var pendingMusicDowngradeDetectedAt: Date?
+    private var pendingMusicDowngradeLastSeen: Date?
+
+    private func syncSelectedOutputDevice() {
+        if let selected = selectedOutputDevice {
+            let stillExists = outputDevices.contains(where: { $0.uid == selected.uid })
+            if !stillExists {
+                selectedOutputDevice = nil
+                Defaults.shared.selectedDeviceUID = nil
+            }
+            return
+        }
+
+        if let savedUID = Defaults.shared.selectedDeviceUID,
+           let savedDevice = outputDevices.first(where: { $0.uid == savedUID }) {
+            selectedOutputDevice = savedDevice
+        }
+    }
+
+    private func updateBitDepthIfNeeded(_ bitDepth: Int?) {
+        guard let bitDepth else { return }
+        if self.currentBitDepth == bitDepth {
+            return
+        }
+        DispatchQueue.main.async {
+            self.currentBitDepth = bitDepth
+        }
+    }
     
     init() {
         self.outputDevices = self.coreAudio.allOutputDevices
         self.defaultOutputDevice = self.coreAudio.defaultOutputDevice
+        if let savedUID = Defaults.shared.selectedDeviceUID,
+           let savedDevice = self.outputDevices.first(where: { $0.uid == savedUID }) {
+            self.selectedOutputDevice = savedDevice
+        } else {
+            self.selectedOutputDevice = nil
+        }
         self.getDeviceSampleRate()
         
         changesCancellable =
@@ -101,8 +145,6 @@ class OutputDevices: ObservableObject {
         dnc.addObserver(forName: NSNotification.Name("com.apple.iTunes.playerInfo"), object: nil, queue: nil, using: handler)
     }
     
-
-    
     private func handleMusicNotification(_ notification: Notification) {
         guard let userInfo = notification.userInfo else { return }
         
@@ -116,12 +158,20 @@ class OutputDevices: ObservableObject {
             }
         }
         
+        var trackID: String?
         if let persistentID = userInfo["PersistentID"] as? Int {
-            let trackID = String(persistentID)
-            self.checkTrackChange(newTrackID: trackID)
+            trackID = String(persistentID)
+            self.checkTrackChange(newTrackID: trackID ?? "")
         } else if let persistentIDStr = userInfo["PersistentID"] as? String {
-             self.checkTrackChange(newTrackID: persistentIDStr)
+            trackID = persistentIDStr
+            self.checkTrackChange(newTrackID: persistentIDStr)
         }
+
+        let trackName = (userInfo["Name"] as? String) ?? (userInfo["Title"] as? String)
+        if let trackName = trackName, !trackName.isEmpty {
+            self.checkTrackNameChange(newTrackName: trackName)
+        }
+        LogStreamer.shared.updateCurrentTrackInfo(trackID: trackID, trackName: trackName)
     }
     
     private func checkTrackChange(newTrackID: String) {
@@ -130,22 +180,48 @@ class OutputDevices: ObservableObject {
             self.handleTrackIDChange(newID: newTrackID)
         }
     }
+
+    private func checkTrackNameChange(newTrackName: String) {
+        if newTrackName != self.lastKnownTrackName {
+            print("Track Changed (Name): \(newTrackName)")
+            self.handleTrackNameChange(newName: newTrackName)
+        }
+    }
     
     private func handleTrackIDChange(newID: String) {
         self.lastKnownTrackID = newID
         self.lastTrackChangeDate = Date()
+        self.pendingMusicDowngradeStat = nil
+        self.pendingMusicDowngradeDetectedAt = nil
+        self.pendingMusicDowngradeLastSeen = nil
         
-        // 如果有为下一曲预留的采样率，现在应用它
         if let pending = self.pendingNextTrackStat {
             print("Applying pending pre-buffered rate: \(pending.sampleRate)")
             self.processQueue.async {
-                self.applySampleRate(stat: pending, recursion: false)
+                self.applySampleRate(stat: pending, recursion: false, bypassDowngradeProtection: true)
                 self.pendingNextTrackStat = nil
+                self.pendingNextTrackStatLastSeen = nil
+            }
+        }
+    }
+
+    private func handleTrackNameChange(newName: String) {
+        self.lastKnownTrackName = newName
+        self.lastTrackChangeDate = Date()
+        self.pendingMusicDowngradeStat = nil
+        self.pendingMusicDowngradeDetectedAt = nil
+        self.pendingMusicDowngradeLastSeen = nil
+
+        if let pending = self.pendingNextTrackStat {
+            print("Applying pending pre-buffered rate (name): \(pending.sampleRate)")
+            self.processQueue.async {
+                self.applySampleRate(stat: pending, recursion: false, bypassDowngradeProtection: true)
+                self.pendingNextTrackStat = nil
+                self.pendingNextTrackStatLastSeen = nil
             }
         }
     }
     
-
     deinit {
         LogStreamer.shared.stop()
         changesCancellable?.cancel()
@@ -165,37 +241,19 @@ class OutputDevices: ObservableObject {
             }
     }
     
-    func renewTimer() {
-        if timerCancellable != nil { return }
-        timerCancellable = Timer
-            .publish(every: 2, on: .main, in: .default)
-            .autoconnect()
-            .sink { _ in
-                if self.timerCalls == 5 {
-                    self.timerCalls = 0
-                    self.timerCancellable?.cancel()
-                    self.timerCancellable = nil
-                }
-                else {
-                    self.timerCalls += 1
-                    self.processQueue.async {
-                        self.switchLatestSampleRate()
-                    }
-                }
-            }
-    }
-    
     func getDeviceSampleRate() {
         let defaultDevice = self.selectedOutputDevice ?? self.defaultOutputDevice
         guard let sampleRate = defaultDevice?.nominalSampleRate else { return }
-        self.updateSampleRate(sampleRate)
+        var bitDepth: Int? = nil
+        if let streams = defaultDevice?.streams(scope: .output),
+           let format = streams.first?.physicalFormat {
+            bitDepth = Int(format.mBitsPerChannel)
+        }
+        self.updateSampleRate(sampleRate, bitDepth: bitDepth)
     }
-    
-
     
     func getAllStats() -> [CMPlayerStats] {
         if #available(macOS 15.0, *) {
-            // macOS 15+ 无法直接通过 OSLogStore 获取系统日志
             return []
         }
         
@@ -217,46 +275,149 @@ class OutputDevices: ObservableObject {
         return stats.sorted(by: { $0.priority > $1.priority })
     }
 
-    
     private var lastKnownTrackID: String?
+    private var lastKnownTrackName: String?
     private var lastTrackChangeDate: Date = Date.distantPast
     private var isMusicPlaying: Bool = false
     private var pendingNextTrackStat: CMPlayerStats?
+    private var pendingNextTrackStatLastSeen: Date?
     
-    /// 根据检测到的音频流切换输出采样率
-    /// 逻辑：
-    /// - 从 CoreAudio/CoreMedia 日志检测采样率变化
-    /// - 显着变化时允许任何调整（升级或降级）
-    /// - 稳定播放期间防止误触发降级，允许显著升级 (≥5%)
     func switchLatestSampleRate(recursion: Bool = false) {
+            if let pending = self.pendingNextTrackStat,
+               let lastSeen = self.pendingNextTrackStatLastSeen {
+                let timeSinceLastSeen = abs(Date().timeIntervalSince(lastSeen))
+                if timeSinceLastSeen > 10.0 {
+                    let isAppleMusicSafetyContext = self.isMusicPlaying || isMusicProcessName(pending.processName)
+                    if isAppleMusicSafetyContext, (self.lastKnownTrackID != nil || self.lastKnownTrackName != nil) {
+                        return
+                    }
+                    print("Applying pre-buffered rate: \(pending.sampleRate) (no pre-buffer log for \(String(format: "%.1fs", timeSinceLastSeen)))")
+                    self.applySampleRate(stat: pending, recursion: false, bypassDowngradeProtection: true)
+                    self.pendingNextTrackStat = nil
+                    self.pendingNextTrackStatLastSeen = nil
+                    return
+                }
+            }
+        
         var allStats = self.getAllStats()
         
-        // Prioritize LogStreamer data
+        let currentGen = LogStreamer.shared.statGeneration
         if let streamedStat = LogStreamer.shared.latestStats {
              let timeDiff = abs(Date().timeIntervalSince(streamedStat.date))
-             if timeDiff < 30.0 {
+             if timeDiff < 120.0 {
                  allStats.insert(streamedStat, at: 0)
              }
         }
         
         guard let first = allStats.first else { return }
+
+        let isNewStat: Bool
+        if currentGen != self.lastProcessedGeneration {
+            self.lastProcessedGeneration = currentGen
+            isNewStat = true
+        } else if let lastDate = self.lastProcessedStatDate {
+            isNewStat = abs(first.date.timeIntervalSince(lastDate)) > 0.01 ||
+                        abs(first.sampleRate - (lastDetectedSampleRate ?? 0)) > 1
+        } else {
+            isNewStat = true
+        }
+        self.lastProcessedStatDate = first.date
+        self.lastDetectedSampleRate = first.sampleRate
+        let now = Date()
+        let isMusicStat = isMusicProcessName(first.processName)
+        if isMusicStat, isNewStat {
+            lastMusicLogAt = now
+            if let currentSR = currentSampleRate {
+                let currentHz = currentSR * 1000
+                if abs(first.sampleRate - currentHz) < 100 {
+                    lastMusicHighRateAt = now
+                }
+            }
+        }
+        let isMusicSessionActive = lastMusicLogAt.map { now.timeIntervalSince($0) < musicSessionWindow } ?? false
+        // Music 降级确认窗口：防止 Hi-Res 播放中途瞬态低码率日志误触降级
+        // 但如果刚切歌（8s 内），降级是合法的新曲目码率，跳过确认直接放行到后续预缓冲保护
+        let recentTrackSwitch = now.timeIntervalSince(self.lastTrackChangeDate) < 8.0
+        if isMusicStat, isMusicSessionActive, !recentTrackSwitch, let currentSR = currentSampleRate {
+            let currentHz = currentSR * 1000
+            if first.sampleRate < currentHz - 100 {
+                let isNewPending = pendingMusicDowngradeStat == nil ||
+                    abs((pendingMusicDowngradeStat?.sampleRate ?? 0) - first.sampleRate) > 1
+
+                if isNewPending {
+                    pendingMusicDowngradeStat = first
+                    pendingMusicDowngradeDetectedAt = now
+                    pendingMusicDowngradeLastSeen = now
+                    return
+                }
+
+                if isNewStat {
+                    pendingMusicDowngradeLastSeen = now
+                }
+
+                if let detectedAt = pendingMusicDowngradeDetectedAt,
+                   now.timeIntervalSince(detectedAt) >= musicDowngradeConfirmWindow {
+                    let highRateSilent = lastMusicHighRateAt.map { now.timeIntervalSince($0) >= musicHighRateSilenceWindow } ?? true
+                    if !highRateSilent {
+                        return
+                    }
+                    pendingMusicDowngradeStat = nil
+                    pendingMusicDowngradeDetectedAt = nil
+                    pendingMusicDowngradeLastSeen = nil
+                    self.applySampleRate(stat: first, recursion: false, bypassDowngradeProtection: true)
+                    return
+                } else {
+                    return
+                }
+            } else {
+                pendingMusicDowngradeStat = nil
+                pendingMusicDowngradeDetectedAt = nil
+                pendingMusicDowngradeLastSeen = nil
+            }
+        }
+        if recentTrackSwitch {
+            // 刚切歌时清除之前的降级挂起状态，避免残留影响新曲目
+            pendingMusicDowngradeStat = nil
+            pendingMusicDowngradeDetectedAt = nil
+            pendingMusicDowngradeLastSeen = nil
+        }
         
-        // Apple Music 预缓冲保护
-        if self.isMusicPlaying, let _ = self.lastKnownTrackID {
+        let isAppleMusicContext = self.isMusicPlaying || isMusicProcessName(first.processName)
+        if isAppleMusicContext, (self.lastKnownTrackID != nil || self.lastKnownTrackName != nil) {
             if let currentSR = self.currentSampleRate {
                 let detectedHz = first.sampleRate
                 let currentHz = currentSR * 1000
                 
                 if abs(detectedHz - currentHz) > 100 {
-                    // 若切歌时间极短（2.5秒内），认为该变化是针对当前曲目的
                     let timeSinceTrackChange = Date().timeIntervalSince(self.lastTrackChangeDate)
-                    if timeSinceTrackChange < 2.5 {
-                         print("Allowing change for new track (changed \(String(format: "%.1fs", timeSinceTrackChange)) ago)")
+                    if timeSinceTrackChange < 8.0 {
+                        // 在新曲目窗口内，如果已经为当前曲目应用过采样率变化，
+                        // 且新检测到的是降级，则视为下一首的预缓冲而非当前曲目的变化
+                        let isDowngrade = detectedHz < currentHz - 100
+                        let alreadyAppliedForThisTrack = self.lastSampleRateChangeDate > self.lastTrackChangeDate
+                        
+                        if isDowngrade && alreadyAppliedForThisTrack {
+                            let isNewLog = self.pendingNextTrackStatLastSeen == nil ||
+                                           first.date > self.pendingNextTrackStatLastSeen!
+                            if isNewLog {
+                                print("Suspicious rate change detected: \(detectedHz)Hz (current: \(currentHz)Hz). Assuming Pre-buffer (post-switch downgrade in new-track window). Holding.")
+                                self.pendingNextTrackStat = first
+                                self.pendingNextTrackStatLastSeen = first.date
+                            }
+                            return
+                        }
+                        
+                        print("Allowing change for new track (changed \(String(format: "%.1fs", timeSinceTrackChange)) ago)")
                     }
                     else {
-                        // 疑似中途变化：可能是预缓冲。由于无法使用自动化权限验证，我们假设它是预缓冲并暂时挂起。
-                        print("Suspicious rate change detected: \(detectedHz)Hz (current: \(currentHz)Hz). Assuming Pre-buffer. Holding.")
-                        self.pendingNextTrackStat = first
+                        let isNewLog = self.pendingNextTrackStatLastSeen == nil || 
+                                       first.date > self.pendingNextTrackStatLastSeen!
+                        
+                        if isNewLog {
+                            print("Suspicious rate change detected: \(detectedHz)Hz (current: \(currentHz)Hz). Assuming Pre-buffer. Holding.")
+                            self.pendingNextTrackStat = first
+                            self.pendingNextTrackStatLastSeen = first.date
+                        }
                         return
                     }
                 }
@@ -265,8 +426,13 @@ class OutputDevices: ObservableObject {
         
         self.applySampleRate(stat: first, recursion: recursion)
     }
+
+    private func isMusicProcessName(_ name: String?) -> Bool {
+        guard let name = name?.lowercased() else { return false }
+        return name == "music" || name == "itunes"
+    }
     
-    private func applySampleRate(stat: CMPlayerStats, recursion: Bool) {
+    private func applySampleRate(stat: CMPlayerStats, recursion: Bool, bypassDowngradeProtection: Bool = false) {
         let first = stat
         let defaultDevice = self.selectedOutputDevice ?? self.defaultOutputDevice
         
@@ -274,29 +440,51 @@ class OutputDevices: ObservableObject {
             
         let sampleRate = Float64(first.sampleRate)
         let bitDepth = Int32(first.bitDepth)
-            
             if let prevSampleRate = currentSampleRate {
                 let prevSampleRateHz = prevSampleRate * 1000
                 
-                // 1. 稳定性检查：采样率变化小于 1kHz 时视为未变
+                // 1. 稳定性检查
                 if abs(prevSampleRateHz - sampleRate) < 1000 {
+                    self.updateBitDepthIfNeeded(Int(bitDepth))
                     if sampleRateJustChanged && Date().timeIntervalSince(lastSampleRateChangeDate) > 3.0 {
                         sampleRateJustChanged = false
-                    }
-                    if Date().timeIntervalSince(sampleRateStableSince) >= 0.5 {
-                        sampleRateStableSince = Date()
                     }
                     return
                 }
                 
                 // 2. 降级保护
                 if sampleRate < prevSampleRateHz {
-                    if first.priority >= 5 {
+                    if bypassDowngradeProtection {
                         pendingDowngradeStat = nil
                         pendingDowngradeDetectedAt = nil
+                    } else if first.priority >= 5 {
+                        let stableDuration = Date().timeIntervalSince(sampleRateStableSince)
+                        let recentTrackChange = Date().timeIntervalSince(lastTrackChangeDate) < 2.0
+                        
+                        if stableDuration <= 10.0 || recentTrackChange {
+                            pendingDowngradeStat = nil
+                            pendingDowngradeDetectedAt = nil
+                        } else {
+                            if let pending = pendingDowngradeStat,
+                               abs(Double(pending.sampleRate) - sampleRate) < 1.0 {
+                                if let firstDetected = pendingDowngradeDetectedAt,
+                                   Date().timeIntervalSince(firstDetected) > 3.0 {
+                                    pendingDowngradeStat = nil
+                                    pendingDowngradeDetectedAt = nil
+                                } else {
+                                    return
+                                }
+                            } else {
+                                pendingDowngradeStat = first
+                                pendingDowngradeDetectedAt = Date()
+                                processQueue.asyncAfter(deadline: .now() + 3.2) {
+                                    self.switchLatestSampleRate()
+                                }
+                                return
+                            }
+                        }
                     } 
                     else {
-                        // 低优先级降级需要进行防抖验证（1.0s），防止 Hi-Res 播放期间的虚假事件
                         if let pending = pendingDowngradeStat,
                            abs(Double(pending.sampleRate) - sampleRate) < 1.0 {
                             
@@ -322,7 +510,7 @@ class OutputDevices: ObservableObject {
                      pendingDowngradeDetectedAt = nil
                 }
                 
-                // 3. 升级保护：忽略小于 5% 的微调
+                // 3. 升级保护
                 let upgradeRatio = sampleRate / prevSampleRateHz
                 if upgradeRatio < 1.05 && sampleRate >= prevSampleRateHz {
                      return
@@ -336,7 +524,6 @@ class OutputDevices: ObservableObject {
             lastSampleRateChangeDate = Date()
             sampleRateStableSince = Date()
             
-            // 48kHz 采样率检测的重试机制
             if sampleRate == 48000 && !recursion {
                 processQueue.asyncAfter(deadline: .now() + 1) {
                     self.switchLatestSampleRate(recursion: true)
@@ -348,16 +535,27 @@ class OutputDevices: ObservableObject {
             let nearest = supported.min(by: {
                 abs($0 - sampleRate) < abs($1 - sampleRate)
             })
-            
-            let nearestBitDepth = formats.min(by: {
+
+            let matchingRateFormats = formats.filter({ $0.mSampleRate == nearest })
+            let nearestBitDepthFormat = matchingRateFormats.min(by: {
                 abs(Int32($0.mBitsPerChannel) - bitDepth) < abs(Int32($1.mBitsPerChannel) - bitDepth)
             })
-            
-            let nearestFormat = formats.filter({
-                $0.mSampleRate == nearest && $0.mBitsPerChannel == nearestBitDepth?.mBitsPerChannel
-            })
-            
-            if let suitableFormat = nearestFormat.first {
+
+            if let suitableFormat = nearestBitDepthFormat ?? matchingRateFormats.first {
+                let prevRate = currentSampleRate
+                let prevBit = currentBitDepth
+                let newRate = suitableFormat.mSampleRate / 1000.0
+                let newBit = Int(suitableFormat.mBitsPerChannel)
+                let rateChanged = prevRate == nil || abs((prevRate ?? 0) * 1000.0 - suitableFormat.mSampleRate) >= 1000
+                let bitChanged = enableBitDepthDetection && (prevBit == nil || prevBit != newBit)
+
+                if rateChanged || bitChanged {
+                    let prevRateText = prevRate.map { String(format: "%.1f", $0) } ?? "-"
+                    let prevBitText = prevBit.map { "\($0)bit" } ?? "-"
+                    let source = first.processName?.isEmpty == false ? first.processName! : first.sourceLabel
+                    let track = first.trackName?.isEmpty == false ? first.trackName! : "-"
+                    debugLog("Switch \(prevRateText)kHz/\(prevBitText) -> \(String(format: "%.1f", newRate))kHz/\(newBit)bit src=\(source) pri=\(first.priority) track=\(track)")
+                }
                 
                 if enableBitDepthDetection {
                     self.setFormats(device: defaultDevice, format: suitableFormat)
@@ -366,7 +564,7 @@ class OutputDevices: ObservableObject {
                     defaultDevice?.setNominalSampleRate(suitableFormat.mSampleRate)
                 }
                 
-                self.updateSampleRate(suitableFormat.mSampleRate)
+                self.updateSampleRate(suitableFormat.mSampleRate, bitDepth: Int(bitDepth))
             }
     }
     
@@ -384,14 +582,15 @@ class OutputDevices: ObservableObject {
         }
     }
     
-    func updateSampleRate(_ sampleRate: Float64) {
+    func updateSampleRate(_ sampleRate: Float64, bitDepth: Int?) {
         self.previousSampleRate = sampleRate
         DispatchQueue.main.async {
             let readableSampleRate = sampleRate / 1000
             self.currentSampleRate = readableSampleRate
-            
-            let delegate = AppDelegate.instance
-            delegate?.statusItemTitle = String(format: "%.1f kHz", readableSampleRate)
+
+            if let bitDepth = bitDepth {
+                self.currentBitDepth = bitDepth
+            }
         }
         self.runUserScript(sampleRate)
     }
@@ -417,16 +616,97 @@ class OutputDevices: ObservableObject {
 
 import Sweep
 
-/// LogStreamer 监控系统日志以检测采样率和位深度
-/// 适用于所有音频播放器（Apple Music, Spotify, 浏览器等）
 class LogStreamer: ObservableObject {
     static let shared = LogStreamer()
     private var process: Process?
     private var pipe: Pipe?
     
     @Published var latestStats: CMPlayerStats?
+    @Published var recentTracks: [DebugTrackEntry] = []
+    private(set) var statGeneration: UInt64 = 0
+    private let debugHistoryLimit = 3
+    private var currentTrackID: String?
+    private var currentTrackName: String?
+    private var currentTrackSignature: String?
     
     private init() {}
+
+#if DEBUG
+    func resetDebugStateForTests() {
+        latestStats = nil
+        recentTracks = []
+        statGeneration = 0
+        currentTrackID = nil
+        currentTrackName = nil
+        currentTrackSignature = nil
+    }
+#endif
+
+    func updateCurrentTrackInfo(trackID: String?, trackName: String?) {
+        DispatchQueue.main.async {
+            let normalizedID = trackID?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let normalizedName = trackName?.trimmingCharacters(in: .whitespacesAndNewlines)
+            let now = Date()
+
+            if let id = normalizedID, !id.isEmpty, id != self.currentTrackID {
+                self.currentTrackID = id
+                if let name = normalizedName, !name.isEmpty {
+                    self.currentTrackName = name
+                }
+                let nameForEntry = self.currentTrackName ?? normalizedName ?? "Unknown"
+                let key = self.makeTrackKey(id: id, name: self.currentTrackName) ?? id
+                self.currentTrackSignature = key
+                self.upsertTrackEntry(
+                    key: key,
+                    trackName: nameForEntry,
+                    processName: "Music",
+                    sampleRate: nil,
+                    bitDepth: nil,
+                    date: now,
+                    makeCurrent: true
+                )
+                return
+            }
+
+            guard let name = normalizedName, !name.isEmpty else { return }
+            if name == self.currentTrackName { return }
+
+            let wasNameEmpty = self.currentTrackName == nil || self.currentTrackName?.isEmpty == true
+            self.currentTrackName = name
+            let newKey = self.makeTrackKey(id: self.currentTrackID, name: name) ?? name
+
+            if wasNameEmpty, let oldKey = self.currentTrackSignature, oldKey != newKey {
+                self.currentTrackSignature = newKey
+                self.replaceTrackEntryKey(oldKey: oldKey, newKey: newKey, trackName: name, date: now)
+                return
+            }
+
+            if self.currentTrackSignature != newKey {
+                self.currentTrackSignature = newKey
+                self.upsertTrackEntry(
+                    key: newKey,
+                    trackName: name,
+                    processName: "Music",
+                    sampleRate: nil,
+                    bitDepth: nil,
+                    date: now,
+                    makeCurrent: true
+                )
+            } else if let key = self.currentTrackSignature {
+                if !self.updateTrackName(key: key, trackName: name) {
+                    self.upsertTrackEntry(
+                        key: key,
+                        trackName: name,
+                        processName: "Music",
+                        sampleRate: nil,
+                        bitDepth: nil,
+                        date: now,
+                        makeCurrent: true
+                    )
+                }
+            }
+        }
+    }
     
     func start() {
         stop()
@@ -448,7 +728,6 @@ class LogStreamer: ObservableObject {
         pipe.fileHandleForReading.readabilityHandler = { [weak self] handle in
             let data = handle.availableData
             if data.isEmpty {
-                // 遇到 EOF，停止处理器以防止死循环 (100% CPU)
                 handle.readabilityHandler = nil
                 return
             }
@@ -460,7 +739,6 @@ class LogStreamer: ObservableObject {
         do {
             try process.run()
         } catch {
-            // 静默失败 - AppleScript 后备方案将处理检测
         }
     }
     
@@ -472,14 +750,11 @@ class LogStreamer: ObservableObject {
         pipe = nil
     }
     
-    /// 解析日志输出以提取采样率和位深度信息
-    /// 优先级：CoreAudio (5) > CoreMedia (2)
     private func processOutput(_ output: String) {
         let lines = output.components(separatedBy: .newlines)
         for line in lines {
             if line.isEmpty { continue }
             
-            // CoreAudio 解析 - 最可靠的来源
             if line.contains("ACAppleLosslessDecoder.cpp") && line.contains("Input format:") {
                 var sampleRate: Double?
                 var bitDepth: Int?
@@ -497,12 +772,39 @@ class LogStreamer: ObservableObject {
                 if let sr = sampleRate, let bd = bitDepth {
                     var stat = CMPlayerStats(sampleRate: sr, bitDepth: bd, date: Date(), priority: 5)
                     stat.processName = self.extractProcessName(from: line)
-                    self.updateStats(stat)
+                    if self.isMusicProcess(stat.processName) {
+                        stat.trackName = self.currentTrackName
+                    }
+                    self.appendDebugStat(stat)
                     continue
                 }
             }
 
-            // CoreMedia 解析 - 备选方案
+            if line.contains("fpfs_ReportAudioPlaybackThroughFigLog") {
+                var sampleRate: Double?
+                var bitDepth: Int?
+
+                if let subSampleRate = line.firstSubstring(between: "[SampleRate ", and: "]") {
+                    let strSampleRate = String(subSampleRate).trimmingCharacters(in: .whitespacesAndNewlines)
+                    sampleRate = Double(strSampleRate)
+                }
+
+                if let subBitDepth = line.firstSubstring(between: "[BitDepth ", and: "]") {
+                    let strBitDepth = String(subBitDepth).trimmingCharacters(in: .whitespacesAndNewlines)
+                    bitDepth = Int(strBitDepth)
+                }
+
+                if let sr = sampleRate {
+                    var stat = CMPlayerStats(sampleRate: sr, bitDepth: bitDepth ?? 24, date: Date(), priority: 2)
+                    stat.processName = self.extractProcessName(from: line)
+                    if self.isMusicProcess(stat.processName) {
+                        stat.trackName = self.currentTrackName
+                    }
+                    self.appendDebugStat(stat)
+                    continue
+                }
+            }
+
             if line.contains("Creating AudioQueue") && line.contains("sampleRate:") {
                 if let subSampleRate = line.firstSubstring(between: "sampleRate:", and: .end) {
                     let str = String(subSampleRate)
@@ -510,7 +812,10 @@ class LogStreamer: ObservableObject {
                     if let sr = scanners.scanDouble() {
                         var stat = CMPlayerStats(sampleRate: sr, bitDepth: 24, date: Date(), priority: 2)
                         stat.processName = self.extractProcessName(from: line)
-                        self.updateStats(stat)
+                        if self.isMusicProcess(stat.processName) {
+                            stat.trackName = self.currentTrackName
+                        }
+                        self.appendDebugStat(stat)
                         continue
                     }
                 }
@@ -522,7 +827,10 @@ class LogStreamer: ObservableObject {
                     if let sr = Double(valStr) {
                         var stat = CMPlayerStats(sampleRate: sr, bitDepth: 24, date: Date(), priority: 2)
                         stat.processName = self.extractProcessName(from: line)
-                        self.updateStats(stat)
+                        if self.isMusicProcess(stat.processName) {
+                            stat.trackName = self.currentTrackName
+                        }
+                        self.appendDebugStat(stat)
                         continue
                     }
                 }
@@ -530,17 +838,15 @@ class LogStreamer: ObservableObject {
         }
     }
     
-    private func updateStats(_ stat: CMPlayerStats) {
+    func appendDebugStat(_ stat: CMPlayerStats) {
         DispatchQueue.main.async {
+            self.statGeneration += 1
             self.latestStats = stat
+            self.updateTrackHistory(with: stat)
         }
     }
-    
+
     private func extractProcessName(from line: String) -> String? {
-        // 日志格式通常为: "Date Time Hostname ProcessName[PID]: Message..."
-        // 或 "Date Time Df ProcessName[PID:TID] ..."
-        
-        // 简单启发式：查找 "... Music[..." 或 "... Spotify[..."
         if let range = line.range(of: "[") {
             let preamble = line[..<range.lowerBound]
             if let lastWord = preamble.components(separatedBy: .whitespaces).last {
@@ -548,6 +854,138 @@ class LogStreamer: ObservableObject {
             }
         }
         return nil
+    }
+
+    private func currentTrackKey() -> String? {
+        return currentTrackSignature ?? currentTrackID ?? currentTrackName
+    }
+
+    private func makeTrackKey(id: String?, name: String?) -> String? {
+        if let id = id, !id.isEmpty, let name = name, !name.isEmpty {
+            return "\(id)|\(name)"
+        }
+        if let id = id, !id.isEmpty {
+            return id
+        }
+        if let name = name, !name.isEmpty {
+            return name
+        }
+        return nil
+    }
+
+    private func updateTrackHistory(with stat: CMPlayerStats) {
+        guard isMusicProcess(stat.processName) || currentTrackKey() != nil else { return }
+        let key = currentTrackKey() ?? stat.trackName ?? "Unknown"
+        let name = currentTrackName ?? stat.trackName ?? "Unknown"
+
+        upsertTrackEntry(
+            key: key,
+            trackName: name,
+            processName: stat.processName ?? "Music",
+            sampleRate: stat.sampleRate,
+            bitDepth: stat.bitDepth,
+            date: stat.date,
+            makeCurrent: true
+        )
+    }
+
+    private func upsertTrackEntry(
+        key: String,
+        trackName: String,
+        processName: String?,
+        sampleRate: Double?,
+        bitDepth: Int?,
+        date: Date?,
+        makeCurrent: Bool
+    ) {
+        if let index = recentTracks.firstIndex(where: { $0.id == key }) {
+            var entry = recentTracks.remove(at: index)
+            entry.trackName = trackName
+            entry.processName = processName ?? entry.processName
+            if let sampleRate { entry.sampleRate = sampleRate }
+            if let bitDepth { entry.bitDepth = bitDepth }
+            if let date { entry.date = date }
+            if makeCurrent {
+                recentTracks.insert(entry, at: 0)
+            } else {
+                recentTracks.insert(entry, at: index)
+            }
+        } else {
+            let entry = DebugTrackEntry(
+                id: key,
+                trackName: trackName,
+                processName: processName,
+                sampleRate: sampleRate,
+                bitDepth: bitDepth,
+                date: date
+            )
+            if makeCurrent {
+                recentTracks.insert(entry, at: 0)
+            } else {
+                recentTracks.append(entry)
+            }
+        }
+
+        recentTracks = recentTracks.reduce(into: [DebugTrackEntry]()) { result, entry in
+            if !result.contains(where: { $0.id == entry.id }) {
+                result.append(entry)
+            }
+        }
+
+        if recentTracks.count > debugHistoryLimit {
+            recentTracks = Array(recentTracks.prefix(debugHistoryLimit))
+        }
+    }
+
+    private func replaceTrackEntryKey(oldKey: String, newKey: String, trackName: String, date: Date?) {
+        if let index = recentTracks.firstIndex(where: { $0.id == oldKey }) {
+            let oldEntry = recentTracks.remove(at: index)
+            let entry = DebugTrackEntry(
+                id: newKey,
+                trackName: trackName,
+                processName: oldEntry.processName,
+                sampleRate: oldEntry.sampleRate,
+                bitDepth: oldEntry.bitDepth,
+                date: date ?? oldEntry.date
+            )
+            recentTracks.insert(entry, at: index)
+        } else {
+            upsertTrackEntry(
+                key: newKey,
+                trackName: trackName,
+                processName: "Music",
+                sampleRate: nil,
+                bitDepth: nil,
+                date: date,
+                makeCurrent: true
+            )
+            return
+        }
+
+        recentTracks = recentTracks.reduce(into: [DebugTrackEntry]()) { result, entry in
+            if !result.contains(where: { $0.id == entry.id }) {
+                result.append(entry)
+            }
+        }
+
+        if recentTracks.count > debugHistoryLimit {
+            recentTracks = Array(recentTracks.prefix(debugHistoryLimit))
+        }
+    }
+
+    @discardableResult
+    private func updateTrackName(key: String, trackName: String) -> Bool {
+        if let index = recentTracks.firstIndex(where: { $0.id == key }) {
+            recentTracks[index].trackName = trackName
+            recentTracks[index].date = Date()
+            return true
+        }
+        return false
+    }
+
+    private func isMusicProcess(_ name: String?) -> Bool {
+        guard let name = name?.lowercased() else { return false }
+        return name == "music" || name == "itunes"
     }
 }
                               

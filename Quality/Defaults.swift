@@ -12,17 +12,20 @@ class Defaults: ObservableObject {
     private let kUserPreferIconStatusBarItem = "com.vincent-neo.LosslessSwitcher-Key-UserPreferIconStatusBarItem"
     private let kSelectedDeviceUID = "com.vincent-neo.LosslessSwitcher-Key-SelectedDeviceUID"
     private let kUserPreferBitDepthDetection = "com.vincent-neo.LosslessSwitcher-Key-BitDepthDetection"
+    private let kUserPreferDebugMenu = "com.vincent-neo.LosslessSwitcher-Key-DebugMenu"
     private let kShellScriptPath = "KeyShellScriptPath"
     
     private init() {
         UserDefaults.standard.register(defaults: [
             kUserPreferIconStatusBarItem : true,
-            kUserPreferBitDepthDetection : false
+            kUserPreferBitDepthDetection : false,
+            kUserPreferDebugMenu : false
         ])
         
         userPreferIconStatusBarItem = UserDefaults.standard.bool(forKey: kUserPreferIconStatusBarItem)
         
         self.userPreferBitDepthDetection = UserDefaults.standard.bool(forKey: kUserPreferBitDepthDetection)
+        self.userPreferDebugMenu = UserDefaults.standard.bool(forKey: kUserPreferDebugMenu)
     }
     
     @Published var userPreferIconStatusBarItem: Bool {
@@ -49,14 +52,18 @@ class Defaults: ObservableObject {
         }
     }
     
-    @Published var userPreferBitDepthDetection: Bool
-    
-    
-    @MainActor func setPreferBitDepthDetection(newValue: Bool) {
-        UserDefaults.standard.set(newValue, forKey: kUserPreferBitDepthDetection)
-        self.userPreferBitDepthDetection = newValue
+    @Published var userPreferBitDepthDetection: Bool {
+        willSet {
+            UserDefaults.standard.set(newValue, forKey: kUserPreferBitDepthDetection)
+        }
     }
 
+    @Published var userPreferDebugMenu: Bool {
+        willSet {
+            UserDefaults.standard.set(newValue, forKey: kUserPreferDebugMenu)
+        }
+    }
+    
     var statusBarItemTitle: String {
         let title = self.userPreferIconStatusBarItem ? "Show Sample Rate" : "Show Icon"
         return title

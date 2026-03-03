@@ -20,14 +20,27 @@
 		127C972D281FCF000087313B /* AppVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 127C972C281FCF000087313B /* AppVersion.swift */; };
 		1293436B28131591002E19A8 /* CurrentUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1293436A28131591002E19A8 /* CurrentUser.swift */; };
 		12AFF5C12811AD40001CC6ED /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12AFF5C02811AD40001CC6ED /* AppDelegate.swift */; };
-		12F1AA572868639A006C1AD8 /* DeviceMenuItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12F1AA562868639A006C1AD8 /* DeviceMenuItem.swift */; };
+		734D7A6907CF4EE788C86024 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DEADB921F53E47ABA955B3E3 /* XCTest.framework */; };
+		87771E7D31914BA99E55E4A7 /* SampleRateText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 117444763EF343B09C13DF53 /* SampleRateText.swift */; };
+		A992D9690EDD4353BA7F1C53 /* OutputDevicesPrebufferTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61E764AF84A24EBA81590227 /* OutputDevicesPrebufferTests.swift */; };
 		BF0C90C82B20BFD6002F99C9 /* LosslessSwitcher.sdef in Resources */ = {isa = PBXBuildFile; fileRef = BF0C90C72B20BFD6002F99C9 /* LosslessSwitcher.sdef */; };
 		BF0C90CA2B20C163002F99C9 /* ScriptableApplicationCommand.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF0C90C92B20C163002F99C9 /* ScriptableApplicationCommand.swift */; };
 		BF342D802E0947890032F398 /* SampleRateLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF342D7F2E0947890032F398 /* SampleRateLabel.swift */; };
 		BF342D822E0948730032F398 /* MenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF342D812E0948730032F398 /* MenuView.swift */; };
 		BF5A87BA2E01D746002033D6 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5A87B92E01D746002033D6 /* MenuBarController.swift */; };
 		BF7E0D09296336DA009FFEEC /* AudioStreamBasicDescription+Equatable.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7E0D08296336DA009FFEEC /* AudioStreamBasicDescription+Equatable.swift */; };
+		D6F2A4C1B3E04C2F8D9A5678 /* DebugStatText.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9D4F1E9C2A74B8F9C7A1234 /* DebugStatText.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B290E3F079B74892A0BFF73D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 1272AA8C280DBB4900FD72BA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 1272AA93280DBB4900FD72BA;
+			remoteInfo = LosslessSwitcher;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		BF342D7E2E0937D20032F398 /* Embed Frameworks */ = {
@@ -43,6 +56,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		117444763EF343B09C13DF53 /* SampleRateText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleRateText.swift; sourceTree = "<group>"; };
 		1221F3FA280F1EEF003E8B77 /* OutputDevices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutputDevices.swift; sourceTree = "<group>"; };
 		1254A79B2813FB9400241107 /* Defaults.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Defaults.swift; sourceTree = "<group>"; };
 		1254A79D2814024300241107 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -57,13 +71,16 @@
 		127C972C281FCF000087313B /* AppVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVersion.swift; sourceTree = "<group>"; };
 		1293436A28131591002E19A8 /* CurrentUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentUser.swift; sourceTree = "<group>"; };
 		12AFF5C02811AD40001CC6ED /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
-		12F1AA562868639A006C1AD8 /* DeviceMenuItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceMenuItem.swift; sourceTree = "<group>"; };
+		61E764AF84A24EBA81590227 /* OutputDevicesPrebufferTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutputDevicesPrebufferTests.swift; sourceTree = "<group>"; };
+		8D74FC6C2C364B02B58624D9 /* LosslessSwitcherTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LosslessSwitcherTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		B9D4F1E9C2A74B8F9C7A1234 /* DebugStatText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugStatText.swift; sourceTree = "<group>"; };
 		BF0C90C72B20BFD6002F99C9 /* LosslessSwitcher.sdef */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = LosslessSwitcher.sdef; sourceTree = "<group>"; };
 		BF0C90C92B20C163002F99C9 /* ScriptableApplicationCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptableApplicationCommand.swift; sourceTree = "<group>"; };
 		BF342D7F2E0947890032F398 /* SampleRateLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleRateLabel.swift; sourceTree = "<group>"; };
 		BF342D812E0948730032F398 /* MenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuView.swift; sourceTree = "<group>"; };
 		BF5A87B92E01D746002033D6 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		BF7E0D08296336DA009FFEEC /* AudioStreamBasicDescription+Equatable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AudioStreamBasicDescription+Equatable.swift"; sourceTree = "<group>"; };
+		DEADB921F53E47ABA955B3E3 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,12 +93,21 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		71FB5F44413E4EF5BE84EA6D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				734D7A6907CF4EE788C86024 /* XCTest.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		1234F4FD281E80A2007EC9F5 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				DEADB921F53E47ABA955B3E3 /* XCTest.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -90,6 +116,7 @@
 			isa = PBXGroup;
 			children = (
 				1272AA96280DBB4900FD72BA /* Quality */,
+				F0AA751A88794AC88F7762E6 /* LosslessSwitcherTests */,
 				1272AA95280DBB4900FD72BA /* Products */,
 				1234F4FD281E80A2007EC9F5 /* Frameworks */,
 			);
@@ -99,6 +126,7 @@
 			isa = PBXGroup;
 			children = (
 				1272AA94280DBB4900FD72BA /* LosslessSwitcher.app */,
+				8D74FC6C2C364B02B58624D9 /* LosslessSwitcherTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -119,10 +147,11 @@
 				1272AAAB280DC5E900FD72BA /* Console.swift */,
 				1272AAAD280DC68A00FD72BA /* CMPlayerStuff.swift */,
 				1221F3FA280F1EEF003E8B77 /* OutputDevices.swift */,
+				117444763EF343B09C13DF53 /* SampleRateText.swift */,
+				B9D4F1E9C2A74B8F9C7A1234 /* DebugStatText.swift */,
 				1293436A28131591002E19A8 /* CurrentUser.swift */,
 				1254A79B2813FB9400241107 /* Defaults.swift */,
 				127C972C281FCF000087313B /* AppVersion.swift */,
-				12F1AA562868639A006C1AD8 /* DeviceMenuItem.swift */,
 				BF7E0D08296336DA009FFEEC /* AudioStreamBasicDescription+Equatable.swift */,
 				BF0C90C92B20C163002F99C9 /* ScriptableApplicationCommand.swift */,
 				BF0C90C72B20BFD6002F99C9 /* LosslessSwitcher.sdef */,
@@ -136,6 +165,14 @@
 				1272AA9E280DBB4B00FD72BA /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		F0AA751A88794AC88F7762E6 /* LosslessSwitcherTests */ = {
+			isa = PBXGroup;
+			children = (
+				61E764AF84A24EBA81590227 /* OutputDevicesPrebufferTests.swift */,
+			);
+			path = LosslessSwitcherTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -163,6 +200,24 @@
 			productReference = 1272AA94280DBB4900FD72BA /* LosslessSwitcher.app */;
 			productType = "com.apple.product-type.application";
 		};
+		B0B972AF96AB420FB55840DE /* LosslessSwitcherTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4481A9F1D9DD43F68E310F4C /* Build configuration list for PBXNativeTarget "LosslessSwitcherTests" */;
+			buildPhases = (
+				6B754B01989B4D12BC4AB2FC /* Sources */,
+				71FB5F44413E4EF5BE84EA6D /* Frameworks */,
+				BE5BD4697E904ED3A82E3A55 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2AB0BF3F3B5544669E25AC01 /* PBXTargetDependency */,
+			);
+			name = LosslessSwitcherTests;
+			productName = LosslessSwitcherTests;
+			productReference = 8D74FC6C2C364B02B58624D9 /* LosslessSwitcherTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -175,6 +230,10 @@
 				TargetAttributes = {
 					1272AA93280DBB4900FD72BA = {
 						CreatedOnToolsVersion = 13.3;
+					};
+					B0B972AF96AB420FB55840DE = {
+						CreatedOnToolsVersion = 13.3;
+						TestTargetID = 1272AA93280DBB4900FD72BA;
 					};
 				};
 			};
@@ -196,6 +255,7 @@
 			projectRoot = "";
 			targets = (
 				1272AA93280DBB4900FD72BA /* LosslessSwitcher */,
+				B0B972AF96AB420FB55840DE /* LosslessSwitcherTests */,
 			);
 		};
 /* End PBXProject section */
@@ -211,6 +271,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		BE5BD4697E904ED3A82E3A55 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -223,9 +290,10 @@
 				1254A79C2813FB9400241107 /* Defaults.swift in Sources */,
 				BF7E0D09296336DA009FFEEC /* AudioStreamBasicDescription+Equatable.swift in Sources */,
 				BF5A87BA2E01D746002033D6 /* MenuBarController.swift in Sources */,
-				12F1AA572868639A006C1AD8 /* DeviceMenuItem.swift in Sources */,
 				BF342D822E0948730032F398 /* MenuView.swift in Sources */,
 				1221F3FB280F1EEF003E8B77 /* OutputDevices.swift in Sources */,
+				87771E7D31914BA99E55E4A7 /* SampleRateText.swift in Sources */,
+				D6F2A4C1B3E04C2F8D9A5678 /* DebugStatText.swift in Sources */,
 				1272AAAE280DC68A00FD72BA /* CMPlayerStuff.swift in Sources */,
 				1272AAAC280DC5E900FD72BA /* Console.swift in Sources */,
 				1272AA9A280DBB4900FD72BA /* ContentView.swift in Sources */,
@@ -236,7 +304,23 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		6B754B01989B4D12BC4AB2FC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A992D9690EDD4353BA7F1C53 /* OutputDevicesPrebufferTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2AB0BF3F3B5544669E25AC01 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 1272AA93280DBB4900FD72BA /* LosslessSwitcher */;
+			targetProxy = B290E3F079B74892A0BFF73D /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		1272AAA1280DBB4B00FD72BA /* Debug */ = {
@@ -357,11 +441,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Quality/Quality.entitlements;
 				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
+				CODE_SIGN_ENTITLEMENTS = Quality/Quality.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"Quality/Preview Content\"";
 				DEVELOPMENT_TEAM = Y9WK7QN4C7;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -394,11 +478,11 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = Quality/Quality.entitlements;
 				CODE_SIGN_ALLOW_ENTITLEMENTS_MODIFICATION = YES;
+				CODE_SIGN_ENTITLEMENTS = Quality/Quality.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"Quality/Preview Content\"";
 				DEVELOPMENT_TEAM = Y9WK7QN4C7;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -426,6 +510,50 @@
 			};
 			name = Release;
 		};
+		87227EB5DC854DB1B817378F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = Y9WK7QN4C7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = LosslessSwitcherTests;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.vincent-neo.LosslessSwitcherTests";
+				PRODUCT_NAME = LosslessSwitcherTests;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LosslessSwitcher.app/Contents/MacOS/LosslessSwitcher";
+			};
+			name = Debug;
+		};
+		BC8AE78B7D744CE4BBDED6D7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = Y9WK7QN4C7;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = LosslessSwitcherTests;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 13.5;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.vincent-neo.LosslessSwitcherTests";
+				PRODUCT_NAME = LosslessSwitcherTests;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LosslessSwitcher.app/Contents/MacOS/LosslessSwitcher";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -443,6 +571,15 @@
 			buildConfigurations = (
 				1272AAA4280DBB4B00FD72BA /* Debug */,
 				1272AAA5280DBB4B00FD72BA /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4481A9F1D9DD43F68E310F4C /* Build configuration list for PBXNativeTarget "LosslessSwitcherTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				87227EB5DC854DB1B817378F /* Debug */,
+				BC8AE78B7D744CE4BBDED6D7 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
