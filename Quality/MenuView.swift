@@ -56,7 +56,7 @@ struct MenuView: View {
                         .foregroundColor(.secondary)
                 }
 
-                ForEach(Array(logStreamer.recentTracks.enumerated()), id: \.offset) { index, entry in
+                ForEach(Array(logStreamer.recentTracks.filter { $0.sampleRate != nil && !$0.trackName.isEmpty && $0.trackName != "Unknown" }.enumerated()), id: \.offset) { index, entry in
                     let lines = DebugStatText.lines(for: entry)
                     (
                         Text(lines.line1 + "\n")
