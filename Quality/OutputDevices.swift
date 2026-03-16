@@ -390,7 +390,7 @@ class OutputDevices: ObservableObject {
     func triggerFlash() {
         DispatchQueue.main.async {
             self.isFlashing = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
                 self.isFlashing = false
             }
         }

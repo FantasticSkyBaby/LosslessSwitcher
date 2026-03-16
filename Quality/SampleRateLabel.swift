@@ -26,7 +26,7 @@ struct SampleRateLabel: View {
         let bitFont = NSFont.systemFont(ofSize: 12, weight: .semibold)
 
         let attributed = NSMutableAttributedString()
-        let textColor = isFlashing ? NSColor.systemRed : NSColor.labelColor
+        let textColor = isFlashing ? NSColor.systemGreen : NSColor.labelColor
 
         attributed.append(NSAttributedString(string: rate, attributes: [
             .font: rateFont,
