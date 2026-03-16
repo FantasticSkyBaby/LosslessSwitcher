@@ -50,13 +50,17 @@ struct MenuView: View {
             if defaults.userPreferDebugMenu {
                 Divider()
 
-                if logStreamer.recentTracks.isEmpty {
+                let visibleTracks = logStreamer.recentTracks.filter {
+                    $0.sampleRate != nil && !$0.trackName.isEmpty && $0.trackName != "Unknown"
+                }
+
+                if visibleTracks.isEmpty {
                     Text("No Data")
                         .font(.system(size: 11))
                         .foregroundColor(.secondary)
                 }
 
-                ForEach(Array(logStreamer.recentTracks.filter { $0.sampleRate != nil && !$0.trackName.isEmpty && $0.trackName != "Unknown" }.enumerated()), id: \.offset) { index, entry in
+                ForEach(Array(visibleTracks.prefix(3).enumerated()), id: \.offset) { index, entry in
                     let lines = DebugStatText.lines(for: entry)
                     (
                         Text(lines.line1 + "\n")

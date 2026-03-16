@@ -29,7 +29,17 @@
 		BF342D822E0948730032F398 /* MenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF342D812E0948730032F398 /* MenuView.swift */; };
 		BF5A87BA2E01D746002033D6 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF5A87B92E01D746002033D6 /* MenuBarController.swift */; };
 		BF7E0D09296336DA009FFEEC /* AudioStreamBasicDescription+Equatable.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF7E0D08296336DA009FFEEC /* AudioStreamBasicDescription+Equatable.swift */; };
+		BFA1B2C3D4E5F60100000002 /* LogStreamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA1B2C3D4E5F60100000001 /* LogStreamer.swift */; };
+		BFA1B2C3D4E5F60200000002 /* SampleRatePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA1B2C3D4E5F60200000001 /* SampleRatePolicy.swift */; };
+		BFA1B2C3D4E5F60300000002 /* LogParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA1B2C3D4E5F60300000001 /* LogParser.swift */; };
+		BFA1B2C3D4E5F60400000002 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA1B2C3D4E5F60400000001 /* AppConfig.swift */; };
+		BFA1B2C3D4E5F60500000002 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA1B2C3D4E5F60500000001 /* Logger.swift */; };
 		D6F2A4C1B3E04C2F8D9A5678 /* DebugStatText.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9D4F1E9C2A74B8F9C7A1234 /* DebugStatText.swift */; };
+		ECFEB1CB2F67D0E900785AE6 /* Logger.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA1B2C3D4E5F60500000001 /* Logger.swift */; };
+		ECFEB1CC2F67D0E900785AE6 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA1B2C3D4E5F60400000001 /* AppConfig.swift */; };
+		ECFEB1CD2F67D0E900785AE6 /* LogStreamer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA1B2C3D4E5F60100000001 /* LogStreamer.swift */; };
+		ECFEB1CE2F67D0E900785AE6 /* SampleRatePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA1B2C3D4E5F60200000001 /* SampleRatePolicy.swift */; };
+		ECFEB1CF2F67D0E900785AE6 /* LogParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA1B2C3D4E5F60300000001 /* LogParser.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -80,6 +90,11 @@
 		BF342D812E0948730032F398 /* MenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuView.swift; sourceTree = "<group>"; };
 		BF5A87B92E01D746002033D6 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 		BF7E0D08296336DA009FFEEC /* AudioStreamBasicDescription+Equatable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AudioStreamBasicDescription+Equatable.swift"; sourceTree = "<group>"; };
+		BFA1B2C3D4E5F60100000001 /* LogStreamer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogStreamer.swift; sourceTree = "<group>"; };
+		BFA1B2C3D4E5F60200000001 /* SampleRatePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SampleRatePolicy.swift; sourceTree = "<group>"; };
+		BFA1B2C3D4E5F60300000001 /* LogParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogParser.swift; sourceTree = "<group>"; };
+		BFA1B2C3D4E5F60400000001 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
+		BFA1B2C3D4E5F60500000001 /* Logger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Logger.swift; sourceTree = "<group>"; };
 		DEADB921F53E47ABA955B3E3 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -134,6 +149,11 @@
 		1272AA96280DBB4900FD72BA /* Quality */ = {
 			isa = PBXGroup;
 			children = (
+				BFA1B2C3D4E5F60500000001 /* Logger.swift */,
+				BFA1B2C3D4E5F60400000001 /* AppConfig.swift */,
+				BFA1B2C3D4E5F60100000001 /* LogStreamer.swift */,
+				BFA1B2C3D4E5F60200000001 /* SampleRatePolicy.swift */,
+				BFA1B2C3D4E5F60300000001 /* LogParser.swift */,
 				1254A79D2814024300241107 /* Info.plist */,
 				12AFF5C02811AD40001CC6ED /* AppDelegate.swift */,
 				1272AA97280DBB4900FD72BA /* QualityApp.swift */,
@@ -285,6 +305,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BFA1B2C3D4E5F60500000002 /* Logger.swift in Sources */,
+				BFA1B2C3D4E5F60400000002 /* AppConfig.swift in Sources */,
+				BFA1B2C3D4E5F60100000002 /* LogStreamer.swift in Sources */,
+				BFA1B2C3D4E5F60200000002 /* SampleRatePolicy.swift in Sources */,
+				BFA1B2C3D4E5F60300000002 /* LogParser.swift in Sources */,
 				12AFF5C12811AD40001CC6ED /* AppDelegate.swift in Sources */,
 				BF0C90CA2B20C163002F99C9 /* ScriptableApplicationCommand.swift in Sources */,
 				1254A79C2813FB9400241107 /* Defaults.swift in Sources */,
@@ -308,6 +333,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ECFEB1CB2F67D0E900785AE6 /* Logger.swift in Sources */,
+				ECFEB1CC2F67D0E900785AE6 /* AppConfig.swift in Sources */,
+				ECFEB1CD2F67D0E900785AE6 /* LogStreamer.swift in Sources */,
+				ECFEB1CE2F67D0E900785AE6 /* SampleRatePolicy.swift in Sources */,
+				ECFEB1CF2F67D0E900785AE6 /* LogParser.swift in Sources */,
 				A992D9690EDD4353BA7F1C53 /* OutputDevicesPrebufferTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -445,7 +475,7 @@
 				CODE_SIGN_ENTITLEMENTS = Quality/Quality.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "\"Quality/Preview Content\"";
 				DEVELOPMENT_TEAM = Y9WK7QN4C7;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -482,7 +512,7 @@
 				CODE_SIGN_ENTITLEMENTS = Quality/Quality.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				DEVELOPMENT_ASSET_PATHS = "\"Quality/Preview Content\"";
 				DEVELOPMENT_TEAM = Y9WK7QN4C7;
 				ENABLE_HARDENED_RUNTIME = YES;

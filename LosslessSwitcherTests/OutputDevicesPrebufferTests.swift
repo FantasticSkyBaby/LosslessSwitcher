@@ -187,29 +187,22 @@ final class OutputDevicesPrebufferTests: XCTestCase {
         XCTAssertEqual(stats.first?.priority, 2)
     }
 
-    func testLogStreamerKeepsLatestThreeTracks() {
+    func testLogStreamerKeepsLatestFiveTracks() {
         let streamer = LogStreamer.shared
 
         LogStreamer.shared.stop()
         LogStreamer.shared.resetDebugStateForTests()
 
-        streamer.updateCurrentTrackInfo(trackID: "1", trackName: "SongA")
-        streamer.appendDebugStat(CMPlayerStats(sampleRate: 44100, bitDepth: 16, date: Date(), priority: 5))
-
-        streamer.updateCurrentTrackInfo(trackID: "2", trackName: "SongB")
-        streamer.appendDebugStat(CMPlayerStats(sampleRate: 48000, bitDepth: 24, date: Date(), priority: 5))
-
-        streamer.updateCurrentTrackInfo(trackID: "3", trackName: "SongC")
-        streamer.appendDebugStat(CMPlayerStats(sampleRate: 96000, bitDepth: 24, date: Date(), priority: 5))
-
-        streamer.updateCurrentTrackInfo(trackID: "4", trackName: "SongD")
-        streamer.appendDebugStat(CMPlayerStats(sampleRate: 88200, bitDepth: 24, date: Date(), priority: 5))
+        for i in 1...6 {
+            streamer.updateCurrentTrackInfo(trackID: "\(i)", trackName: "Song\(i)")
+            streamer.appendDebugStat(CMPlayerStats(sampleRate: 44100, bitDepth: 16, date: Date(), priority: 5))
+        }
 
         RunLoop.main.run(until: Date().addingTimeInterval(0.1))
 
-        XCTAssertEqual(streamer.recentTracks.count, 3)
-        XCTAssertEqual(streamer.recentTracks.first?.trackName, "SongD")
-        XCTAssertEqual(streamer.recentTracks.last?.trackName, "SongB")
+        XCTAssertEqual(streamer.recentTracks.count, 5)
+        XCTAssertEqual(streamer.recentTracks.first?.trackName, "Song6")
+        XCTAssertEqual(streamer.recentTracks.last?.trackName, "Song2")
     }
 
     func testLogStreamerUpdatesCurrentTrackStats() {
